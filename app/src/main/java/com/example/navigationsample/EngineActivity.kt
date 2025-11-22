@@ -16,13 +16,6 @@ class EngineActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Verifica Display
-        val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display
-        } else {
-            windowManager.defaultDisplay
-        }
-
         // ID 0 geralmente é a tela interna principal.
         if (display != null && display.displayId == 0) {
             finish()
@@ -42,11 +35,7 @@ class EngineActivity : Activity() {
         val params = WindowManager.LayoutParams(
             0, 0,
 
-            // Tipo de Janela: TYPE_APPLICATION_OVERLAY (Android O+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else
-                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
 
             // FLAGS:
             // NOT_FOCUSABLE: O toque passa para o app de baixo.

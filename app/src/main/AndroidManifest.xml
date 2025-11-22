@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Permissões Essenciais -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="ForegroundServicesPolicy" />
     <!-- Necessário para Android 14+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Necessário para desenhar o pixel de rotação -->
@@ -55,11 +56,14 @@
             android:name=".RotationService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServiceType" >
 
-        <!-- Receiver (Opcional, se ainda estiver usando no Service) -->
-        <!-- Se você moveu a lógica de receiver para dentro do RotationService (registerReceiver dinâmico),
-             pode remover esta tag <receiver> do manifesto para limpar -->
+            <!-- OBRIGATÓRIO NO ANDROID 14+: Justificativa para specialUse -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="@string/fgs_rotation_reason" />
+        </service>
 
     </application>
 

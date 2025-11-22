@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">NavigationSample</string>
+    <string name="fgs_rotation_reason">Overlay para controle de rotação em telas dobráveis</string>
 </resources>
