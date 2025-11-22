@@ -23,31 +23,37 @@ class RotationService : Service() {
     override fun onCreate() {
         super.onCreate()
         startForegroundServiceNotif()
-        registerUnlockReceiver()
 
-        // Lança a Engine imediatamente ao iniciar o serviço também
+        // Lança a Engine imediatamente
         launchEngine(this)
+
+        registerUnlockReceiver()
     }
 
     private fun registerUnlockReceiver() {
         unlockReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (Intent.ACTION_USER_PRESENT == intent.action) {
-                    // Ao desbloquear, relança a Engine transparente
+                if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
+                    // Reaplica a Engine para garantir rotação e desbloqueio
                     launchEngine(context)
                 }
             }
         }
-        val filter = IntentFilter(Intent.ACTION_USER_PRESENT)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_USER_PRESENT)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
         registerReceiver(unlockReceiver, filter)
     }
 
     private fun launchEngine(context: Context) {
         val engineIntent = Intent(context, EngineActivity::class.java)
         engineIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        engineIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        // Garante que ela limpe qualquer instância anterior presa
-        engineIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        // REORDER_TO_FRONT traz a activity existente para o topo sem recriar
+        engineIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        // Remove animação para ser imperceptível
+        engineIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+
         context.startActivity(engineIntent)
     }
 
@@ -65,9 +71,8 @@ class RotationService : Service() {
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Rotação Ativa")
-            .setContentText("Otimizando orientação da tela")
+            .setContentText("Controlando orientação da tela")
             .setSmallIcon(android.R.drawable.ic_menu_rotate)
-            .setOngoing(true) // Impede que o usuário remova facilmente
             .build()
 
         startForeground(1, notification)
@@ -75,8 +80,6 @@ class RotationService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (unlockReceiver != null) {
-            unregisterReceiver(unlockReceiver)
-        }
+        if (unlockReceiver != null) unregisterReceiver(unlockReceiver)
     }
 }

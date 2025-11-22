@@ -2,10 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissões necessárias para manter o serviço vivo e sobrepor a tela -->
+    <!-- Permissões Essenciais -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Necessário para Android 14+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Necessário para desenhar o pixel de rotação -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Necessário para acordar a tela -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
@@ -18,55 +21,45 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NavigationSample">
 
-        <!-- Receiver que detecta o desbloqueio da tela -->
-        <receiver
-            android:name=".UnlockReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.USER_PRESENT" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Serviço responsável por manter o processo ativo -->
-        <service
-            android:name=".RotationService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="specialUse" />
-
-        <!-- Metadados para aparecer nas configurações da Cover Screen (Samsung) -->
+        <!-- Metadados Samsung (Cover Screen) -->
         <meta-data
             android:name="com.samsung.android.icon_on_cover_screen"
             android:value="true" />
 
-        <!-- Activity Principal: Invisível, serve apenas para iniciar o serviço/pedir permissão -->
+        <!-- MainActivity: Apenas verifica permissão e chama a Engine -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|uiMode"
             android:exported="true"
-            android:label="@string/app_name"
-            android:resizeableActivity="true"
-            android:showWhenLocked="true"
             android:theme="@style/Theme.TransparentActivity"
-            android:turnScreenOn="true">
+            android:excludeFromRecents="true"
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Engine Activity: A responsável técnica por forçar a rotação -->
+        <!-- EngineActivity: Desbloqueia a tela e morre -->
         <activity
             android:name=".EngineActivity"
-            android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize|keyboardHidden"
+            android:theme="@style/Theme.TransparentActivity"
+            android:taskAffinity="com.example.navigationsample.engine"
             android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:screenOrientation="sensor"
             android:showOnLockScreen="true"
             android:showWhenLocked="true"
-            android:taskAffinity="com.example.navigationsample.engine"
-            android:theme="@style/Theme.TransparentActivity" />
+            android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize|keyboardHidden"
+            android:noHistory="false" />
+
+        <!-- RotationService: Onde a mágica acontece (Overlay de Sistema) -->
+        <service
+            android:name=".RotationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Receiver (Opcional, se ainda estiver usando no Service) -->
+        <!-- Se você moveu a lógica de receiver para dentro do RotationService (registerReceiver dinâmico),
+             pode remover esta tag <receiver> do manifesto para limpar -->
 
     </application>
 
