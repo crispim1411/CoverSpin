@@ -49,11 +49,6 @@ class RotationService : Service() {
     private fun launchEngine(context: Context) {
         val engineIntent = Intent(context, EngineActivity::class.java)
         engineIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        // REORDER_TO_FRONT traz a activity existente para o topo sem recriar
-        engineIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-        // Remove animação para ser imperceptível
-        engineIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-
         context.startActivity(engineIntent)
     }
 
