@@ -15,6 +15,8 @@ OBS: For work you need to add the app in GoodLock and initialize on CoverScreen
 
 OBS2: If you close All Apps in Recent Apps you'll need to initialize CoverSpin on coverscreen again 
 
+OBS3: It appears to work only for Flip 6 and 7 
+
 ## Features
 
 - **Invisible Control Overlay:** Uses a transparent `View` of type `TYPE_APPLICATION_OVERLAY` to inject orientation parameters into the WindowManager.
@@ -34,6 +36,7 @@ This forces the Android `WindowManager` to respect the orientation defined by th
 ### Roadmap & Known Issues 🚧
 
 - **Bug Fix:** The aspect ratio icon is misaligned when the cover screen is rotated to landscape mode.
+- **Bug Fix:** It seems to ignoring the time to lock on coverscreen
 - **Feature:** Plan to include the Recent Apps view
 
 ## Contribution
