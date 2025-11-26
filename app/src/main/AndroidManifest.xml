@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- Necessário para acordar a tela -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -29,7 +30,7 @@
 
         <!-- MainActivity: Apenas verifica permissão e chama a Engine -->
         <activity
-            android:name="com.crispim.coverspin.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.TransparentActivity"
             android:excludeFromRecents="true"
@@ -42,28 +43,34 @@
 
         <!-- EngineActivity: Desbloqueia a tela e morre -->
         <activity
-            android:name="com.crispim.coverspin.EngineActivity"
+            android:name=".EngineActivity"
             android:theme="@style/Theme.TransparentActivity"
-            android:taskAffinity="com.example.navigationsample.engine"
+            android:taskAffinity=".engine"
+            android:launchMode="singleInstance"
             android:excludeFromRecents="true"
-            android:showOnLockScreen="true"
-            android:showWhenLocked="true"
             android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize|keyboardHidden"
             android:noHistory="false" />
 
-        <!-- RotationService: Onde a mágica acontece (Overlay de Sistema) -->
         <service
-            android:name="com.crispim.coverspin.RotationService"
+            android:name=".KeepAliveService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse"
-            tools:ignore="ForegroundServiceType" >
+            android:foregroundServiceType="specialUse">
 
-            <!-- OBRIGATÓRIO NO ANDROID 14+: Justificativa para specialUse -->
+            <!-- Necessário para Android 14+ -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="@string/fgs_rotation_reason" />
+                android:value="overlay_management"/>
         </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

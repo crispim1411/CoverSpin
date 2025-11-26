@@ -1,6 +1,8 @@
 package com.crispim.coverspin
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.PixelFormat
 import android.os.Bundle
@@ -10,7 +12,23 @@ import android.view.WindowManager
 
 class EngineActivity : Activity() {
 
-    private var overlayView: View? = null
+    companion object {
+        @SuppressLint("StaticFieldLeak")
+        private var overlayView: View? = null
+
+        val isOverlayActive: Boolean
+            get() = overlayView != null
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // Se o usuário clicou no ícone de novo, garantimos que o overlay está ativo
+        addRotationOverlay()
+
+        // Manda pro fundo novamente, pois o usuário não quer ver a tela vazia
+        moveTaskToBack(true)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,15 +39,27 @@ class EngineActivity : Activity() {
             return
         }
 
-        addRotationOverlay()
-        moveTaskToBack(true)
+        if (!isOverlayActive) {
+            addRotationOverlay()
+        }
+        startKeepAliveService()
+        finish()
+    }
+
+    private fun startKeepAliveService() {
+        try {
+            val serviceIntent = Intent(this, KeepAliveService::class.java)
+            startForegroundService(serviceIntent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun addRotationOverlay() {
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
         // Criação da View Invisível
-        overlayView = View(this)
+        overlayView = View(applicationContext)
 
         val params = WindowManager.LayoutParams(
             0, 0,
@@ -61,18 +91,6 @@ class EngineActivity : Activity() {
             windowManager.addView(overlayView, params)
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (overlayView != null) {
-            val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-            try {
-                windowManager.removeView(overlayView)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
         }
     }
 }
