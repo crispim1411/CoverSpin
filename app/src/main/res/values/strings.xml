@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">CoverSpin</string>
     <string name="fgs_rotation_reason">Overlay para controle de rotação em telas dobráveis</string>
+    <string name="accessibility_service_description">O CoverSpin precisa deste serviço para manter a rotação ativa e executar gestos na tela de capa.</string>
 </resources>

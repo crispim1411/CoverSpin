@@ -23,10 +23,7 @@ class EngineActivity : Activity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // Se o usuário clicou no ícone de novo, garantimos que o overlay está ativo
         addRotationOverlay()
-
-        // Manda pro fundo novamente, pois o usuário não quer ver a tela vazia
         moveTaskToBack(true)
     }
 
