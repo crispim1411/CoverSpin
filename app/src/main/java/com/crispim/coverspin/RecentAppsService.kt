@@ -75,6 +75,7 @@ class RecentAppsService : AccessibilityService() {
                     pendingVolumeUpRunnable = null
                     EngineActivity.setRotationEnabled(true)
                     EngineActivity.setNewUserPrefRotation(this,true)
+                    showToast("Rotation enabled")
                     return true
                 }
                 else {
@@ -94,6 +95,7 @@ class RecentAppsService : AccessibilityService() {
                 pendingVolumeDownRunnable = null
                 EngineActivity.setRotationEnabled(false)
                 EngineActivity.setNewUserPrefRotation(this,false)
+                showToast("Rotation disabled")
                 return true
             }
             else {
@@ -149,6 +151,48 @@ class RecentAppsService : AccessibilityService() {
             )
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    private fun showToast(msg: String) {
+        handler.post {
+            try {
+                val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+                val targetDisplay = displayManager.getDisplay(1) ?: displayManager.getDisplay(0) ?: return@post
+
+                val displayContext = createDisplayContext(targetDisplay)
+                val wm = displayContext.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+
+                val params = android.view.WindowManager.LayoutParams(
+                    android.view.WindowManager.LayoutParams.WRAP_CONTENT,
+                    android.view.WindowManager.LayoutParams.WRAP_CONTENT,
+                    android.view.WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                    android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                            android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    android.graphics.PixelFormat.TRANSLUCENT
+                )
+                params.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL
+                params.y = 100
+
+                val textView = android.widget.TextView(displayContext)
+                textView.text = msg
+                textView.setTextColor(android.graphics.Color.WHITE)
+                textView.textSize = 14f
+                textView.setPadding(40, 20, 40, 20)
+
+                val background = android.graphics.drawable.GradientDrawable()
+                background.setColor(0xCC000000.toInt())
+                background.cornerRadius = 50f
+                textView.background = background
+
+                wm.addView(textView, params)
+
+                handler.postDelayed({
+                    try { wm.removeView(textView) } catch (e: Exception) {}
+                }, 2000)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
