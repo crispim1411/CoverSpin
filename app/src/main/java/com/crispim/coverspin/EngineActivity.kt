@@ -2,6 +2,7 @@ package com.crispim.coverspin
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.PixelFormat
@@ -40,6 +41,38 @@ class EngineActivity : Activity() {
                 e.printStackTrace()
             }
         }
+
+        private fun addRotationOverlay(context: Context) {
+            val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
+
+            // Criação da View Invisível
+            overlayView = View(context.applicationContext)
+
+            val params = WindowManager.LayoutParams(
+                0, 0,
+
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+
+                // FLAGS:
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+
+                PixelFormat.TRANSLUCENT
+            )
+
+            params.gravity = Gravity.TOP or Gravity.START
+
+            // O SEGREDO: Aplicar a orientação NESTA janela flutuante
+            params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+
+            try {
+                windowManager.addView(overlayView, params)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -51,7 +84,7 @@ class EngineActivity : Activity() {
         }
 
         if (!isOverlayActive) {
-            addRotationOverlay()
+            addRotationOverlay(this)
         }
 
         moveTaskToBack(true)
@@ -67,7 +100,7 @@ class EngineActivity : Activity() {
         }
 
         if (!isOverlayActive) {
-            addRotationOverlay()
+            addRotationOverlay(this)
         }
         startRecentAppsService()
         finish()
@@ -82,35 +115,5 @@ class EngineActivity : Activity() {
         }
     }
 
-    private fun addRotationOverlay() {
-        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        // Criação da View Invisível
-        overlayView = View(applicationContext)
-
-        val params = WindowManager.LayoutParams(
-            0, 0,
-
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-
-            // FLAGS:
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-
-            PixelFormat.TRANSLUCENT
-        )
-
-        params.gravity = Gravity.TOP or Gravity.START
-
-        // O SEGREDO: Aplicar a orientação NESTA janela flutuante
-        params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
-
-        try {
-            windowManager.addView(overlayView, params)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
 }

@@ -18,7 +18,8 @@ enum class VolumeDirection {
 
 class RecentAppsService : AccessibilityService() {
 
-    private var pendingVolumeRunnable: Runnable? = null
+    private var pendingVolumeUpRunnable: Runnable? = null
+    private var pendingVolumeDownRunnable: Runnable? = null
     private val clickDelay = 400L
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var screenStateReceiver: BroadcastReceiver
@@ -70,36 +71,38 @@ class RecentAppsService : AccessibilityService() {
 
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             if (action == KeyEvent.ACTION_DOWN) {
-                if (pendingVolumeRunnable != null) {
-                    handler.removeCallbacks(pendingVolumeRunnable!!)
-                    pendingVolumeRunnable = null
-                    openRecentApps()
+                if (pendingVolumeUpRunnable != null) {
+                    handler.removeCallbacks(pendingVolumeUpRunnable!!)
+                    pendingVolumeUpRunnable = null
+                    //openRecentApps()
+                    EngineActivity.setRotationEnabled(false)
                     return true
                 }
                 else {
-                    pendingVolumeRunnable = Runnable {
+                    pendingVolumeUpRunnable = Runnable {
                         adjustVolume(VolumeDirection.Up)
-                        pendingVolumeRunnable = null
+                        pendingVolumeUpRunnable = null
                     }
-                    handler.postDelayed(pendingVolumeRunnable!!, clickDelay)
+                    handler.postDelayed(pendingVolumeUpRunnable!!, clickDelay)
                     return true
                 }
             }
         }
 
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && action == KeyEvent.ACTION_DOWN) {
-            if (pendingVolumeRunnable != null) {
-                handler.removeCallbacks(pendingVolumeRunnable!!)
-                pendingVolumeRunnable = null
-                performGlobalAction(GLOBAL_ACTION_HOME)
+            if (pendingVolumeDownRunnable != null) {
+                handler.removeCallbacks(pendingVolumeDownRunnable!!)
+                pendingVolumeDownRunnable = null
+                //performGlobalAction(GLOBAL_ACTION_HOME)
+                EngineActivity.setRotationEnabled(true)
                 return true
             }
             else {
-                pendingVolumeRunnable = Runnable {
+                pendingVolumeDownRunnable = Runnable {
                     adjustVolume(VolumeDirection.Down)
-                    pendingVolumeRunnable = null
+                    pendingVolumeDownRunnable = null
                 }
-                handler.postDelayed(pendingVolumeRunnable!!, clickDelay)
+                handler.postDelayed(pendingVolumeDownRunnable!!, clickDelay)
                 return true
             }
         }
