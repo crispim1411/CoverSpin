@@ -11,14 +11,9 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
-enum class VolumeDirection {
-    Up,
-    Down
-}
-
 class EventsService : AccessibilityService() {
 
-    private var pendingVolumeUpRunnable: Runnable? = null
+    private val SCAN_CODE_VOLUME_DOWN = 115
     private var pendingVolumeDownRunnable: Runnable? = null
     private val clickDelay = 300L
     private val handler = Handler(Looper.getMainLooper())
@@ -68,51 +63,27 @@ class EventsService : AccessibilityService() {
         }
 
         val action = event.action
-        val keyCode = event.keyCode
-        if (action == KeyEvent.ACTION_UP &&
-            (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
+
+        if (event.scanCode == SCAN_CODE_VOLUME_DOWN && action == KeyEvent.ACTION_UP) {
             return true
         }
 
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-            if (action == KeyEvent.ACTION_DOWN) {
-                if (pendingVolumeUpRunnable != null) {
-                    handler.removeCallbacks(pendingVolumeUpRunnable!!)
-                    pendingVolumeUpRunnable = null
-                    if (!EngineActivity.setRotationEnabled(this,true))
-                        showToast("Please initialize CoverSpin")
-                    else {
-                        EngineActivity.setNewUserPrefRotation(this,true)
-                        showToast("Rotation enabled")
-                    }
-                    return true
-                }
-                else {
-                    pendingVolumeUpRunnable = Runnable {
-                        adjustVolume(VolumeDirection.Up)
-                        pendingVolumeUpRunnable = null
-                    }
-                    handler.postDelayed(pendingVolumeUpRunnable!!, clickDelay)
-                    return true
-                }
-            }
-        }
-
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && action == KeyEvent.ACTION_DOWN) {
+        if (event.scanCode == SCAN_CODE_VOLUME_DOWN && action == KeyEvent.ACTION_DOWN) {
             if (pendingVolumeDownRunnable != null) {
                 handler.removeCallbacks(pendingVolumeDownRunnable!!)
                 pendingVolumeDownRunnable = null
-                if (!EngineActivity.setRotationEnabled(this,false))
+                val newValue = !EngineActivity.loadUserPrefRotation(this)
+                if (!EngineActivity.setRotationEnabled(this,newValue))
                     showToast("Please initialize CoverSpin")
                 else {
-                    EngineActivity.setNewUserPrefRotation(this, false)
-                    showToast("Rotation disabled")
+                    EngineActivity.setNewUserPrefRotation(this, newValue)
+                    showToast(if (newValue) "Rotation enabled" else "Rotation disabled")
                 }
                 return true
             }
             else {
                 pendingVolumeDownRunnable = Runnable {
-                    adjustVolume(VolumeDirection.Down)
+                    adjustVolume()
                     pendingVolumeDownRunnable = null
                 }
                 handler.postDelayed(pendingVolumeDownRunnable!!, clickDelay)
@@ -147,18 +118,12 @@ class EventsService : AccessibilityService() {
         }
     }
 
-    private fun adjustVolume(direction: VolumeDirection) {
+    private fun adjustVolume() {
         try {
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val adjustment = if (direction == VolumeDirection.Up) {
-                AudioManager.ADJUST_RAISE
-            } else {
-                AudioManager.ADJUST_LOWER
-            }
-
             audioManager.adjustStreamVolume(
                 AudioManager.STREAM_MUSIC,
-                adjustment,
+                AudioManager.ADJUST_LOWER,
                 AudioManager.FLAG_SHOW_UI // Mostra a barra de volume na tela
             )
         } catch (e: Exception) {
