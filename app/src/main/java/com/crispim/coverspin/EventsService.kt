@@ -56,11 +56,15 @@ class EventsService : AccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        val shortcutsEnabled = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+            .getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
+        if (!shortcutsEnabled)
+            return super.onKeyEvent(event)
+
         val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
         val mainDisplay = displayManager.getDisplay(0)
-        if (mainDisplay?.state == android.view.Display.STATE_ON) {
+        if (mainDisplay?.state == android.view.Display.STATE_ON)
             return super.onKeyEvent(event)
-        }
 
         val action = event.action
 
