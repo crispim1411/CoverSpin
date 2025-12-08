@@ -98,30 +98,6 @@ class EventsService : AccessibilityService() {
         return super.onKeyEvent(event)
     }
 
-    private fun openRecentApps() {
-        try {
-            val samsungIntent = Intent()
-            samsungIntent.component = android.content.ComponentName(
-                "com.sec.android.app.launcher",
-                "com.android.quickstep.RecentsActivity"
-            )
-            samsungIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            samsungIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) // Tenta forçar reinício
-
-            val options = android.app.ActivityOptions.makeBasic()
-            val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
-            val targetDisplay = displayManager.getDisplay(1)
-
-            if (targetDisplay != null) {
-                options.launchDisplayId = targetDisplay.displayId
-                startActivity(samsungIntent, options.toBundle())
-                return
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
     private fun adjustVolume() {
         try {
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
