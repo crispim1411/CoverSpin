@@ -40,7 +40,7 @@ class EngineActivity : Activity() {
                 val params = view.layoutParams as WindowManager.LayoutParams
 
                 val newOrientation = if (enable) {
-                    ActivityInfo.SCREEN_ORIENTATION_SENSOR
+                    ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
                 } else {
                     ActivityInfo.SCREEN_ORIENTATION_LOCKED
                 }
@@ -80,8 +80,7 @@ class EngineActivity : Activity() {
 
             params.gravity = Gravity.TOP or Gravity.START
 
-            // O SEGREDO: Aplicar a orientação NESTA janela flutuante
-            params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+            params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
 
             try {
                 windowManager.addView(newView, params)
