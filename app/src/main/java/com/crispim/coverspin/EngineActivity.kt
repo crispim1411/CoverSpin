@@ -33,7 +33,7 @@ class EngineActivity : Activity() {
                 .getBoolean("IS_ROTATION_ENABLED", true)
         }
 
-        fun setRotationEnabled(context: Context, enable: Boolean) : Boolean {
+        fun setRotationEnabled(enable: Boolean) : Boolean {
             val view = overlayView ?: return false
             try {
                 val windowManager = view.context.getSystemService(WINDOW_SERVICE) as WindowManager
@@ -45,47 +45,39 @@ class EngineActivity : Activity() {
                     ActivityInfo.SCREEN_ORIENTATION_LOCKED
                 }
 
-                // Só atualiza se mudou para economizar bateria
                 if (params.screenOrientation != newOrientation) {
                     params.screenOrientation = newOrientation
                     windowManager.updateViewLayout(view, params)
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                showToast(view.context, "setRotationEnabled Error: ${e.message}")
                 return false;
             }
             return true;
         }
 
         private fun addRotationOverlay(context: Context) {
-            val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
-
-            // Criação da View Invisível
-            val newView = View(context.applicationContext)
-            overlayViewRef = WeakReference(newView)
-
-            val params = WindowManager.LayoutParams(
-                0, 0,
-
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-
-                // FLAGS:
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-
-                PixelFormat.TRANSLUCENT
-            )
-
-            params.gravity = Gravity.TOP or Gravity.START
-
-            params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-
             try {
+                val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
+
+                val newView = View(context.applicationContext)
+                overlayViewRef = WeakReference(newView)
+
+                val params = WindowManager.LayoutParams(
+                    0, 0,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                    PixelFormat.TRANSLUCENT
+                )
+
+                params.gravity = Gravity.TOP or Gravity.START
+                params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+
                 windowManager.addView(newView, params)
             } catch (e: Exception) {
-                e.printStackTrace()
+                showToast(context, "addRotationOverlay Error: ${e.message}")
             }
         }
     }
@@ -118,6 +110,7 @@ class EngineActivity : Activity() {
 
         if (!isOverlayActive)
             addRotationOverlay(this)
+        
         startRecentAppsService()
         finish()
     }
@@ -127,9 +120,7 @@ class EngineActivity : Activity() {
             val serviceIntent = Intent(this, EventsService::class.java)
             startForegroundService(serviceIntent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            showToast(this, "startRecentAppsService Error: ${e.message}")
         }
     }
-
-
 }

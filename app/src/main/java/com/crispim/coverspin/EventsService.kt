@@ -28,12 +28,12 @@ class EventsService : AccessibilityService() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     Intent.ACTION_SCREEN_OFF -> {
-                        EngineActivity.setRotationEnabled(context!!,false)
+                        EngineActivity.setRotationEnabled(false)
                     }
                     Intent.ACTION_USER_PRESENT -> {
                         val shouldRotate = EngineActivity.loadUserPrefRotation(context!!)
-                        if (shouldRotate)
-                            EngineActivity.setRotationEnabled(context,true)
+                        if(!EngineActivity.setRotationEnabled(shouldRotate))
+                            showToast(context, "CoverSpin not running :(")
                     }
                 }
             }
@@ -49,57 +49,59 @@ class EventsService : AccessibilityService() {
         try {
             unregisterReceiver(screenStateReceiver)
         } catch (e: Exception) {
-            e.printStackTrace()
+            showToast(this, "onDestroy Error: ${e.message}")
         }
         super.onDestroy()
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
-        val sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-        val shortcutsEnabled = sharedPrefs.getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
-        
-        if (!shortcutsEnabled || event.scanCode != SCAN_CODE_VOLUME_DOWN) {
-            return super.onKeyEvent(event)
-        }
+        try {
+            val sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+            val shortcutsEnabled = sharedPrefs.getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
 
-        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
-        val mainDisplay = displayManager.getDisplay(0)
-        if (mainDisplay?.state == android.view.Display.STATE_ON) {
-            return super.onKeyEvent(event)
-        }
+            if (!shortcutsEnabled || event.scanCode != SCAN_CODE_VOLUME_DOWN) {
+                return super.onKeyEvent(event)
+            }
 
-        val action = event.action
+            val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+            val mainDisplay = displayManager.getDisplay(0)
+            if (mainDisplay?.state == android.view.Display.STATE_ON) {
+                return super.onKeyEvent(event)
+            }
 
-        if (action == KeyEvent.ACTION_DOWN) {
-            return true
-        }
+            val action = event.action
 
-        if (action == KeyEvent.ACTION_UP) {
-            val clickDelay = sharedPrefs.getInt("CLICK_DELAY_MS", 300).toLong()
-
-            if (pendingVolumeDownRunnable != null) {
-                handler.removeCallbacks(pendingVolumeDownRunnable!!)
-                pendingVolumeDownRunnable = null
-                
-                val newValue = !EngineActivity.loadUserPrefRotation(this)
-                if (!EngineActivity.setRotationEnabled(this,newValue))
-                    showToast("Please initialize CoverSpin")
-                else {
-                    EngineActivity.setNewUserPrefRotation(this, newValue)
-                    showToast(if (newValue) "Rotation enabled" else "Rotation disabled")
-                }
+            if (action == KeyEvent.ACTION_DOWN) {
                 return true
             }
-            else {
-                pendingVolumeDownRunnable = Runnable {
-                    adjustVolume()
+
+            if (action == KeyEvent.ACTION_UP) {
+                val clickDelay = sharedPrefs.getInt("CLICK_DELAY_MS", 300).toLong()
+
+                if (pendingVolumeDownRunnable != null) {
+                    handler.removeCallbacks(pendingVolumeDownRunnable!!)
                     pendingVolumeDownRunnable = null
-                }
-                handler.postDelayed(pendingVolumeDownRunnable!!, clickDelay)
-                return true
-            }
-        }
 
+                    val newValue = !EngineActivity.loadUserPrefRotation(this)
+                    if (!EngineActivity.setRotationEnabled(newValue))
+                        showToast(this, "Please initialize CoverSpin")
+                    else {
+                        EngineActivity.setNewUserPrefRotation(this, newValue)
+                        showToast(this, if (newValue) "Rotation enabled" else "Rotation disabled")
+                    }
+                    return true
+                } else {
+                    pendingVolumeDownRunnable = Runnable {
+                        adjustVolume()
+                        pendingVolumeDownRunnable = null
+                    }
+                    handler.postDelayed(pendingVolumeDownRunnable!!, clickDelay)
+                    return true
+                }
+            }
+        } catch (e: Exception) {
+            showToast(this, "onKeyEvent Error: ${e.message}")
+        }
         return super.onKeyEvent(event)
     }
 
@@ -112,49 +114,7 @@ class EventsService : AccessibilityService() {
                 AudioManager.FLAG_SHOW_UI
             )
         } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun showToast(msg: String) {
-        handler.post {
-            try {
-                val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
-                val targetDisplay = displayManager.getDisplay(1) ?: displayManager.getDisplay(0) ?: return@post
-
-                val displayContext = createDisplayContext(targetDisplay)
-                val wm = displayContext.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
-
-                val params = android.view.WindowManager.LayoutParams(
-                    android.view.WindowManager.LayoutParams.WRAP_CONTENT,
-                    android.view.WindowManager.LayoutParams.WRAP_CONTENT,
-                    android.view.WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                    android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                            android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                    android.graphics.PixelFormat.TRANSLUCENT
-                )
-                params.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL
-                params.y = 100
-
-                val textView = android.widget.TextView(displayContext)
-                textView.text = msg
-                textView.setTextColor(android.graphics.Color.WHITE)
-                textView.textSize = 14f
-                textView.setPadding(40, 20, 40, 20)
-
-                val background = android.graphics.drawable.GradientDrawable()
-                background.setColor(0xCC000000.toInt())
-                background.cornerRadius = 50f
-                textView.background = background
-
-                wm.addView(textView, params)
-
-                handler.postDelayed({
-                    try { wm.removeView(textView) } catch (e: Exception) {}
-                }, 2000)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            showToast(this, "adjustVolume Error: ${e.message}")
         }
     }
 }

@@ -202,7 +202,7 @@ class MainActivity : ComponentActivity() {
                             isRotationEnabled = it
                             EngineActivity.setNewUserPrefRotation(context, it)
                             if (EngineActivity.isOverlayActive) {
-                                EngineActivity.setRotationEnabled(context, it)
+                                EngineActivity.setRotationEnabled(it)
                             }
                         },
                         enabled = isEngineRunning
@@ -235,8 +235,8 @@ class MainActivity : ComponentActivity() {
                         Slider(
                             value = clickDelay,
                             onValueChange = { clickDelay = it },
-                            valueRange = 100f..700f,
-                            steps = 5,
+                            valueRange = 200f..400f,
+                            steps = 3,
                             onValueChangeFinished = {
                                 context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
                                     .edit { putInt("CLICK_DELAY_MS", clickDelay.toInt()) }
@@ -256,7 +256,7 @@ class MainActivity : ComponentActivity() {
                     startActivity(intent)
                     isEngineRunning = true
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                        EngineActivity.setRotationEnabled(context, isRotationEnabled)
+                        EngineActivity.setRotationEnabled(isRotationEnabled)
                     }, 500)
                 },
                 enabled = !isEngineRunning && !isInnerScreen && allPermissionsGranted,
