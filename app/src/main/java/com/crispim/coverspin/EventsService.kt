@@ -32,8 +32,12 @@ class EventsService : AccessibilityService() {
                     }
                     Intent.ACTION_USER_PRESENT -> {
                         val shouldRotate = EngineActivity.loadUserPrefRotation(context!!)
-                        if(!EngineActivity.setRotationEnabled(shouldRotate))
-                            showToast(context, "CoverSpin not running :(")
+                        if(!EngineActivity.setRotationEnabled(shouldRotate)) {
+                            showToast(context, "Initializing...")
+                            val intent = Intent(context, EngineActivity::class.java)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(intent)
+                        }
                     }
                 }
             }
@@ -83,8 +87,12 @@ class EventsService : AccessibilityService() {
                     pendingVolumeDownRunnable = null
 
                     val newValue = !EngineActivity.loadUserPrefRotation(this)
-                    if (!EngineActivity.setRotationEnabled(newValue))
-                        showToast(this, "Please initialize CoverSpin")
+                    if (!EngineActivity.setRotationEnabled(newValue)) {
+                        showToast(this, "Starting...")
+                        val intent = Intent(this, EngineActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                    }
                     else {
                         EngineActivity.setNewUserPrefRotation(this, newValue)
                         showToast(this, if (newValue) "Rotation enabled" else "Rotation disabled")
