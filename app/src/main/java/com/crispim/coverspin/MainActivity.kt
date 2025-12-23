@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,8 +50,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
@@ -100,9 +102,6 @@ class MainActivity : ComponentActivity() {
                     .getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
             )
         }
-        var isInnerScreen by remember {
-            mutableStateOf(displayManager.getDisplay(0)?.state == android.view.Display.STATE_ON)
-        }
         var hasAccessibilityPermission by remember {
             mutableStateOf(isAccessibilityServiceEnabled(context, EventsService::class.java))
         }
@@ -120,7 +119,6 @@ class MainActivity : ComponentActivity() {
             val observer = LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_RESUME) {
                     isEngineRunning = EngineActivity.isOverlayActive
-                    isInnerScreen = displayManager.getDisplay(0)?.state == android.view.Display.STATE_ON
                     hasOverlayPermission = Settings.canDrawOverlays(context)
                     hasAccessibilityPermission = isAccessibilityServiceEnabled(context, EventsService::class.java)
                     isRotationEnabled = EngineActivity.loadUserPrefRotation(context)
@@ -141,29 +139,42 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f), shape = RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.ScreenRotation,
-                    contentDescription = "Logo",
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(16.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ScreenRotation,
+                        contentDescription = "Logo",
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "CoverSpin",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
 
-            Text(
-                text = "CoverSpin",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+            val allPermissionsGranted = hasOverlayPermission && hasAccessibilityPermission
+            if (!allPermissionsGranted) {
+                WarningCard(
+                    title = "Warning",
+                    message = "For the app to function correctly, please grant the required permissions."
                 )
-            )
+            }
 
             if (!hasOverlayPermission || !hasAccessibilityPermission) {
                 InfoCard(title = "Required Permissions") {
@@ -192,93 +203,68 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            InfoCard(title = "Settings") {
-                Column {
-                    SettingRowSwitch(
-                        title = "Rotation Active",
-                        subtitle = "Manually toggle screen rotation",
-                        checked = isRotationEnabled,
-                        onCheckedChange = {
-                            isRotationEnabled = it
-                            EngineActivity.setNewUserPrefRotation(context, it)
-                            if (EngineActivity.isOverlayActive) {
-                                EngineActivity.setRotationEnabled(it)
-                            }
-                        },
-                        enabled = isEngineRunning
-                    )
+            if (allPermissionsGranted) {
+                InfoCard(title = "Settings") {
+                    Column {
+                        SettingRowSwitch(
+                            title = "Rotation Active",
+                            subtitle = "Manually toggle screen rotation",
+                            checked = isRotationEnabled,
+                            onCheckedChange = {
+                                isRotationEnabled = it
+                                EngineActivity.setNewUserPrefRotation(context, it)
+                                if (EngineActivity.isOverlayActive) {
+                                    EngineActivity.setRotationEnabled(it)
+                                }
+                            },
+                            enabled = isEngineRunning
+                        )
 
-                    SettingDivider()
+                        SettingDivider()
 
-                    SettingRowSwitch(
-                        title = "Volume Shortcuts",
-                        subtitle = "Double press volume down to rotate",
-                        checked = volumeShortcutsEnabled,
-                        onCheckedChange = {
-                            volumeShortcutsEnabled = it
-                            context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-                                .edit { putBoolean("VOLUME_SHORTCUTS_ENABLED", it) }
-                        }
-                    )
-                    
-                    SettingDivider()
-                    
-                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ){
-                            Text("Double-Press Delay", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("${clickDelay.toInt()} ms", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        }
-                        Slider(
-                            value = clickDelay,
-                            onValueChange = { clickDelay = it },
-                            valueRange = 200f..400f,
-                            steps = 3,
-                            onValueChangeFinished = {
+                        SettingRowSwitch(
+                            title = "Volume Shortcuts",
+                            subtitle = "Double press volume down to rotate",
+                            checked = volumeShortcutsEnabled,
+                            onCheckedChange = {
+                                volumeShortcutsEnabled = it
                                 context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-                                    .edit { putInt("CLICK_DELAY_MS", clickDelay.toInt()) }
+                                    .edit { putBoolean("VOLUME_SHORTCUTS_ENABLED", it) }
                             }
                         )
+
+                        SettingDivider()
+
+                        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "Double-Press Delay",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "${clickDelay.toInt()} ms",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Slider(
+                                value = clickDelay,
+                                onValueChange = { clickDelay = it },
+                                valueRange = 200f..400f,
+                                steps = 3,
+                                onValueChangeFinished = {
+                                    context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
+                                        .edit { putInt("CLICK_DELAY_MS", clickDelay.toInt()) }
+                                }
+                            )
+                        }
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val allPermissionsGranted = hasOverlayPermission && hasAccessibilityPermission
-
-            Button(
-                onClick = {
-                    val intent = Intent(context, EngineActivity::class.java)
-                    startActivity(intent)
-                    isEngineRunning = true
-                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                        EngineActivity.setRotationEnabled(isRotationEnabled)
-                    }, 500)
-                },
-                enabled = !isEngineRunning && !isInnerScreen && allPermissionsGranted,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = Color.Gray
-                )
-            ) {
-                Text(
-                    text = when {
-                        !allPermissionsGranted -> "Missing Permissions"
-                        isInnerScreen -> "Open on external screen"
-                        isEngineRunning -> "Service running..."
-                        else -> "Start Engine"
-                    },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
             }
 
             OutlinedButton(
@@ -295,7 +281,21 @@ class MainActivity : ComponentActivity() {
                 Text(text = "Buy me an Ice Cream ($1)")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = {
+                    val url = "https://github.com/crispim1411/CoverSpin/issues"
+                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                    context.startActivity(intent)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Text(text = "A Bug? Report it!")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
     
@@ -381,6 +381,36 @@ class MainActivity : ComponentActivity() {
             elevation = ButtonDefaults.buttonElevation(0.dp)
         ) {
             Text(text)
+        }
+    }
+
+    @Composable
+    fun WarningCard(title: String, message: String) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Rounded.Info, contentDescription = "Warning", tint = Color(0xFFFBC02D))
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color(0xFFFBC02D),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = Color.DarkGray
+                )
+            }
         }
     }
 
