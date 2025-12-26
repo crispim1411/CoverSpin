@@ -216,7 +216,7 @@ class MainActivity : ComponentActivity() {
 
                         SettingRowSwitch(
                             title = "Volume Shortcuts",
-                            subtitle = "Double press volume down to rotate",
+                            subtitle = "Double press volume down to enable/disable auto rotation",
                             checked = volumeShortcutsEnabled,
                             onCheckedChange = {
                                 volumeShortcutsEnabled = it

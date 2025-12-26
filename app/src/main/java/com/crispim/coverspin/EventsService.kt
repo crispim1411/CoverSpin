@@ -85,10 +85,8 @@ class EventsService : AccessibilityService() {
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         startActivity(intent)
                     }
-                    else {
-                        EngineActivity.setNewUserPrefRotation(this, newValue)
-                        showToast(this, if (newValue) "Rotation enabled" else "Rotation disabled")
-                    }
+                    showToast(this, if (newValue) "Rotation enabled" else "Rotation disabled")
+                    EngineActivity.setNewUserPrefRotation(this, newValue)
                     return true
                 } else {
                     hasVolumeDecreased = true

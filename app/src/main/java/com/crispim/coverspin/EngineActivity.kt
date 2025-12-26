@@ -23,12 +23,12 @@ class EngineActivity : Activity() {
             get() = overlayView != null
 
         fun setNewUserPrefRotation(context: Context, enable: Boolean) {
-            context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+            context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
                 .edit { putBoolean("IS_ROTATION_ENABLED", enable) }
         }
 
         fun loadUserPrefRotation(context: Context) : Boolean {
-            return context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+            return context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
                 .getBoolean("IS_ROTATION_ENABLED", true)
         }
 
@@ -99,7 +99,7 @@ class EngineActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        val displayManager = getSystemService(DISPLAY_SERVICE) as android.hardware.display.DisplayManager
         val mainDisplay = displayManager.getDisplay(0)
 
         if (mainDisplay?.state == android.view.Display.STATE_ON) {
