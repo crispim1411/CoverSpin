@@ -92,28 +92,18 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun SettingsScreen() {
         val context = LocalContext.current
+        val sharedPrefs = context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
 
-        val displayManager = remember { context.getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager }
-        var isEngineRunning by remember { mutableStateOf(EngineActivity.isOverlayActive) }
-        var hasOverlayPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
         var volumeShortcutsEnabled by remember {
-            mutableStateOf(
-                context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-                    .getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
-            )
-        }
-        var hasAccessibilityPermission by remember {
-            mutableStateOf(isAccessibilityServiceEnabled(context, EventsService::class.java))
-        }
-        var isRotationEnabled by remember {
-            mutableStateOf(EngineActivity.loadUserPrefRotation(context))
+            mutableStateOf(sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, true))
         }
         var clickDelay by remember {
-            mutableStateOf(
-                context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-                    .getInt("CLICK_DELAY_MS", 300).toFloat()
-            )
+            mutableStateOf(sharedPrefs.getInt(Constants.PREF_KEY_CLICK_DELAY, Constants.DEFAULT_CLICK_DELAY_MS).toFloat())
         }
+        var isRotationEnabled by remember { mutableStateOf(EngineActivity.loadUserPrefRotation(context)) }
+        var isEngineRunning by remember { mutableStateOf(EngineActivity.isOverlayActive) }
+        var hasOverlayPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+        var hasAccessibilityPermission by remember { mutableStateOf(isAccessibilityServiceEnabled(context, EventsService::class.java)) }
 
         DisposableEffect(context as LifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
@@ -122,6 +112,8 @@ class MainActivity : ComponentActivity() {
                     hasOverlayPermission = Settings.canDrawOverlays(context)
                     hasAccessibilityPermission = isAccessibilityServiceEnabled(context, EventsService::class.java)
                     isRotationEnabled = EngineActivity.loadUserPrefRotation(context)
+                    volumeShortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, true)
+                    clickDelay = sharedPrefs.getInt(Constants.PREF_KEY_CLICK_DELAY, Constants.DEFAULT_CLICK_DELAY_MS).toFloat()
                 }
             }
             context.lifecycle.addObserver(observer)
@@ -228,8 +220,7 @@ class MainActivity : ComponentActivity() {
                             checked = volumeShortcutsEnabled,
                             onCheckedChange = {
                                 volumeShortcutsEnabled = it
-                                context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-                                    .edit { putBoolean("VOLUME_SHORTCUTS_ENABLED", it) }
+                                sharedPrefs.edit { putBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, it) }
                             }
                         )
 
@@ -258,8 +249,7 @@ class MainActivity : ComponentActivity() {
                                 valueRange = 200f..400f,
                                 steps = 3,
                                 onValueChangeFinished = {
-                                    context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
-                                        .edit { putInt("CLICK_DELAY_MS", clickDelay.toInt()) }
+                                    sharedPrefs.edit { putInt(Constants.PREF_KEY_CLICK_DELAY, clickDelay.toInt()) }
                                 }
                             )
                         }

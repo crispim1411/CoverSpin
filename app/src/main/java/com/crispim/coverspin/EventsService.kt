@@ -13,17 +13,18 @@ import android.view.accessibility.AccessibilityEvent
 
 class EventsService : AccessibilityService() {
 
-    private val SCAN_CODE_VOLUME_DOWN = 115
     private var pendingVolumeDownRunnable: Runnable? = null
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var screenStateReceiver: BroadcastReceiver
+    private lateinit var audioManager: AudioManager
+    private var hasVolumeDecreased: Boolean = false
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
     override fun onInterrupt() {}
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
@@ -61,31 +62,22 @@ class EventsService : AccessibilityService() {
     override fun onKeyEvent(event: KeyEvent): Boolean {
         try {
             val sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-            val shortcutsEnabled = sharedPrefs.getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
-
-            if (!shortcutsEnabled || event.scanCode != SCAN_CODE_VOLUME_DOWN) {
-                return super.onKeyEvent(event)
-            }
-
+            val shortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, true)
             val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
             val mainDisplay = displayManager.getDisplay(0)
-            if (mainDisplay?.state == android.view.Display.STATE_ON) {
+
+            if (!shortcutsEnabled
+                || event.scanCode != Constants.SCAN_CODE_VOLUME_DOWN
+                || event.action == KeyEvent.ACTION_DOWN
+                || mainDisplay?.state == android.view.Display.STATE_ON) {
                 return super.onKeyEvent(event)
             }
 
-            val action = event.action
-
-            if (action == KeyEvent.ACTION_DOWN) {
-                return true
-            }
-
-            if (action == KeyEvent.ACTION_UP) {
-                val clickDelay = sharedPrefs.getInt("CLICK_DELAY_MS", 300).toLong()
-
+            if (event.action == KeyEvent.ACTION_UP) {
                 if (pendingVolumeDownRunnable != null) {
                     handler.removeCallbacks(pendingVolumeDownRunnable!!)
                     pendingVolumeDownRunnable = null
-
+                    restoreVolume()
                     val newValue = !EngineActivity.loadUserPrefRotation(this)
                     if (!EngineActivity.setRotationEnabled(newValue)) {
                         showToast(this, "Starting...")
@@ -99,30 +91,36 @@ class EventsService : AccessibilityService() {
                     }
                     return true
                 } else {
+                    hasVolumeDecreased = true
                     pendingVolumeDownRunnable = Runnable {
-                        adjustVolume()
+                        hasVolumeDecreased = false
                         pendingVolumeDownRunnable = null
                     }
+                    val clickDelay = sharedPrefs.getInt(Constants.PREF_KEY_CLICK_DELAY, Constants.DEFAULT_CLICK_DELAY_MS).toLong()
                     handler.postDelayed(pendingVolumeDownRunnable!!, clickDelay)
-                    return true
                 }
             }
         } catch (e: Exception) {
             showToast(this, "onKeyEvent Error: ${e.message}")
         }
+
         return super.onKeyEvent(event)
     }
 
-    private fun adjustVolume() {
-        try {
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            audioManager.adjustStreamVolume(
-                AudioManager.STREAM_MUSIC,
-                AudioManager.ADJUST_LOWER,
-                AudioManager.FLAG_SHOW_UI
-            )
-        } catch (e: Exception) {
-            showToast(this, "adjustVolume Error: ${e.message}")
+    private fun restoreVolume() {
+        if (hasVolumeDecreased) {
+            try {
+                val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                audioManager.setStreamVolume(
+                    AudioManager.STREAM_MUSIC,
+                    currentVolume+2,
+                    0
+                )
+            } catch (e: Exception) {
+                showToast(this, "Failed to restore volume: ${e.message}")
+            } finally {
+                hasVolumeDecreased = false
+            }
         }
     }
 }
