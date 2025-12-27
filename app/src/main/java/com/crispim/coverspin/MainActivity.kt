@@ -199,8 +199,8 @@ class MainActivity : ComponentActivity() {
                 InfoCard(title = "Settings") {
                     Column {
                         SettingRowSwitch(
-                            title = "Rotation Active",
-                            subtitle = "Manually toggle screen rotation",
+                            title = "Auto-rotation Active",
+                            subtitle = "Enables cover screen auto-rotation",
                             checked = isRotationEnabled,
                             onCheckedChange = {
                                 isRotationEnabled = it
@@ -215,8 +215,8 @@ class MainActivity : ComponentActivity() {
                         SettingDivider()
 
                         SettingRowSwitch(
-                            title = "Volume Shortcuts",
-                            subtitle = "Double press volume down to enable/disable auto rotation",
+                            title = "Volume Key Shortcut",
+                            subtitle = "Double press volume down to enable/disable auto-rotation",
                             checked = volumeShortcutsEnabled,
                             onCheckedChange = {
                                 volumeShortcutsEnabled = it

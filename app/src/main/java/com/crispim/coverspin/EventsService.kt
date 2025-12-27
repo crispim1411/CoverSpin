@@ -31,7 +31,7 @@ class EventsService : AccessibilityService() {
                     Intent.ACTION_SCREEN_OFF -> {
                         EngineActivity.setRotationEnabled(false)
                     }
-                    Intent.ACTION_USER_PRESENT -> {
+                    Intent.ACTION_SCREEN_ON -> {
                         val shouldRotate = EngineActivity.loadUserPrefRotation(context!!)
                         if(!EngineActivity.setRotationEnabled(shouldRotate)) {
                             showToast(context, "Initializing...")
@@ -46,7 +46,7 @@ class EventsService : AccessibilityService() {
 
         val filter = IntentFilter()
         filter.addAction(Intent.ACTION_SCREEN_OFF)
-        filter.addAction(Intent.ACTION_USER_PRESENT)
+        filter.addAction(Intent.ACTION_SCREEN_ON)
         registerReceiver(screenStateReceiver, filter)
     }
 
