@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
+import android.hardware.display.DisplayManager
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
@@ -19,25 +21,32 @@ class EventsService : AccessibilityService() {
     private lateinit var audioManager: AudioManager
     private var hasVolumeDecreased: Boolean = false
 
+    private lateinit var sharedPrefs: SharedPreferences
+    private lateinit var displayManager: DisplayManager
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
     override fun onInterrupt() {}
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+        displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
+                val serviceContext = this@EventsService
                 when (intent?.action) {
                     Intent.ACTION_SCREEN_OFF -> {
                         EngineActivity.setRotationEnabled(false)
                     }
                     Intent.ACTION_SCREEN_ON -> {
-                        val shouldRotate = EngineActivity.loadUserPrefRotation(context!!)
+                        val shouldRotate = EngineActivity.loadUserPrefRotation(serviceContext)
                         if(!EngineActivity.setRotationEnabled(shouldRotate)) {
-                            showToast(context, "Initializing...")
-                            val intent = Intent(context, EngineActivity::class.java)
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            startActivity(intent)
+                            showToast(serviceContext, "Initializing...")
+                            val startIntent = Intent(serviceContext, EngineActivity::class.java)
+                            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(startIntent)
                         }
                     }
                 }
@@ -61,9 +70,7 @@ class EventsService : AccessibilityService() {
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
         try {
-            val sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
             val shortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, true)
-            val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
             val mainDisplay = displayManager.getDisplay(0)
 
             if (!shortcutsEnabled
