@@ -18,7 +18,7 @@ The main goal is to allow screen orientation (Landscape/Portrait/Sensor) to work
 
 The app has an option to intercept **Double Clicks** on the physical volume buttons to control rotation without needing to open the app again.
 
-> *Note: Single clicks still adjust the volume normally. But this disables camera shutter by volume key, the torch functionality on the cover screen and increasing/decreasing the volume by holding the volume keys*
+> *Note: Single clicks still adjust the volume normally. But this disables camera shutter by volume key, the torch functionality on the cover screen and increasing/decreasing the volume by holding the volume keys.*
 
 - **Shortcuts:** Toggle rotation on/off using physical volume buttons.
 - **Intelligent State:** Automatically pauses rotation when the screen is locked (to prevent Lockscreen bugs) and restores your preference upon unlocking.
