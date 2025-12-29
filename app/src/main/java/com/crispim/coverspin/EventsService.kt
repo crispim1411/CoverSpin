@@ -34,28 +34,24 @@ class EventsService : AccessibilityService() {
         displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
         screenStateReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
+            override fun onReceive(context: Context?, intent: Intent) {
                 val serviceContext = this@EventsService
-                when (intent?.action) {
-                    Intent.ACTION_SCREEN_OFF -> {
-                        EngineActivity.setRotationEnabled(false)
-                    }
-                    Intent.ACTION_SCREEN_ON -> {
-                        val shouldRotate = EngineActivity.loadUserPrefRotation(serviceContext)
-                        if(!EngineActivity.setRotationEnabled(shouldRotate)) {
-                            showToast(serviceContext, "Initializing...")
-                            val startIntent = Intent(serviceContext, EngineActivity::class.java)
-                            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            startActivity(startIntent)
-                        }
+                if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
+                    val shouldRotate = EngineActivity.loadUserPrefRotation(serviceContext)
+                    if(!EngineActivity.setRotationEnabled(shouldRotate)) {
+                        showToast(serviceContext, "Initializing...")
+                        val startIntent = Intent(serviceContext, EngineActivity::class.java)
+                        startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(startIntent)
                     }
                 }
             }
         }
 
-        val filter = IntentFilter()
-        filter.addAction(Intent.ACTION_SCREEN_OFF)
-        filter.addAction(Intent.ACTION_SCREEN_ON)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_USER_PRESENT)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
         registerReceiver(screenStateReceiver, filter)
     }
 
@@ -87,7 +83,6 @@ class EventsService : AccessibilityService() {
                     restoreVolume()
                     val newValue = !EngineActivity.loadUserPrefRotation(this)
                     if (!EngineActivity.setRotationEnabled(newValue)) {
-                        showToast(this, "Starting...")
                         val intent = Intent(this, EngineActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         startActivity(intent)

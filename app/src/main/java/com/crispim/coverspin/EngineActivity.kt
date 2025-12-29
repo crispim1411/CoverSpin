@@ -20,7 +20,7 @@ class EngineActivity : Activity() {
             get() = overlayViewRef?.get()
 
 
-        private var rotationEnabled: Boolean = false;
+        private var rotationEnabled: Boolean = true;
 
         val isRotationEnabled: Boolean
             get() = isOverlayActive && rotationEnabled
