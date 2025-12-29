@@ -19,7 +19,7 @@ data class SettingsUiState(
     val hasOverlayPermission: Boolean = false,
     val hasAccessibilityPermission: Boolean = false,
     val isRotationEnabled: Boolean = true,
-    val volumeShortcutsEnabled: Boolean = true,
+    val volumeShortcutsEnabled: Boolean = false,
     val clickDelay: Float = Constants.DEFAULT_CLICK_DELAY_MS.toFloat()
 )
 
@@ -46,8 +46,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     isEngineRunning = EngineActivity.isOverlayActive,
                     hasOverlayPermission = Settings.canDrawOverlays(getApplication()),
                     hasAccessibilityPermission = isAccessibilityServiceEnabled(getApplication(), EventsService::class.java),
-                    isRotationEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_ROTATION_ENABLED, true),
-                    volumeShortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, true),
+                    isRotationEnabled = EngineActivity.isRotationEnabled,
+                    volumeShortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, false),
                     clickDelay = sharedPrefs.getInt(Constants.PREF_KEY_CLICK_DELAY, Constants.DEFAULT_CLICK_DELAY_MS).toFloat()
                 )
             }
@@ -79,22 +79,26 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
     
     private fun isAccessibilityServiceEnabled(context: Context, service: Class<*>): Boolean {
-        val enabledServices = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
+        try {
+            val enabledServices = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: return false
 
-        val colonSplitter = TextUtils.SimpleStringSplitter(':')
-        colonSplitter.setString(enabledServices)
+            val colonSplitter = TextUtils.SimpleStringSplitter(':')
+            colonSplitter.setString(enabledServices)
 
-        val componentName = android.content.ComponentName(context, service)
-        val flatName = componentName.flattenToString()
+            val componentName = android.content.ComponentName(context, service)
+            val flatName = componentName.flattenToString()
 
-        while (colonSplitter.hasNext()) {
-            val component = colonSplitter.next()
-            if (component.equals(flatName, ignoreCase = true)) {
-                return true
+            while (colonSplitter.hasNext()) {
+                val component = colonSplitter.next()
+                if (component.equals(flatName, ignoreCase = true)) {
+                    return true
+                }
             }
+        } catch (e: Exception) {
+            showToast(context, "isAccessibilityServiceEnabled Error: ${e.message}")
         }
         return false
     }

@@ -19,17 +19,25 @@ class EngineActivity : Activity() {
         private val overlayView: View?
             get() = overlayViewRef?.get()
 
+
+        private var rotationEnabled: Boolean = false;
+
+        val isRotationEnabled: Boolean
+            get() = isOverlayActive && rotationEnabled
+
         val isOverlayActive: Boolean
             get() = overlayView != null
 
         fun setNewUserPrefRotation(context: Context, enable: Boolean) {
             context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
                 .edit { putBoolean("IS_ROTATION_ENABLED", enable) }
+            rotationEnabled = enable
         }
 
         fun loadUserPrefRotation(context: Context) : Boolean {
-            return context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
+            rotationEnabled = context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
                 .getBoolean("IS_ROTATION_ENABLED", true)
+            return rotationEnabled
         }
 
         fun setRotationEnabled(enable: Boolean) : Boolean {
@@ -39,8 +47,11 @@ class EngineActivity : Activity() {
                 val params = view.layoutParams as WindowManager.LayoutParams
 
                 val newOrientation = if (enable) {
+                    rotationEnabled = true
                     ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+
                 } else {
+                    rotationEnabled = false
                     ActivityInfo.SCREEN_ORIENTATION_LOCKED
                 }
 
@@ -73,6 +84,7 @@ class EngineActivity : Activity() {
 
                 params.gravity = Gravity.TOP or Gravity.START
                 params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                rotationEnabled = true
 
                 windowManager.addView(newView, params)
             } catch (e: Exception) {
