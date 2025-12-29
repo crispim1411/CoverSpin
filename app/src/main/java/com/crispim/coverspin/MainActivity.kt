@@ -31,7 +31,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -203,33 +202,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         checked = uiState.volumeShortcutsEnabled,
                         onCheckedChange = { viewModel.onVolumeShortcutsEnabledChange(it) }
                     )
-
-                    SettingDivider()
-
-                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                "Double-Press Delay",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                "${uiState.clickDelay.toInt()} ms",
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Slider(
-                            value = uiState.clickDelay,
-                            onValueChange = { viewModel.onClickDelayChange(it) },
-                            valueRange = 200f..400f,
-                            steps = 3
-                        )
-                    }
                 }
             }
         }

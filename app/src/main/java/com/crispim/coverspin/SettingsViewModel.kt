@@ -20,7 +20,6 @@ data class SettingsUiState(
     val hasAccessibilityPermission: Boolean = false,
     val isRotationEnabled: Boolean = true,
     val volumeShortcutsEnabled: Boolean = false,
-    val clickDelay: Float = Constants.DEFAULT_CLICK_DELAY_MS.toFloat()
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -48,7 +47,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     hasAccessibilityPermission = isAccessibilityServiceEnabled(getApplication(), EventsService::class.java),
                     isRotationEnabled = EngineActivity.isRotationEnabled,
                     volumeShortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, false),
-                    clickDelay = sharedPrefs.getInt(Constants.PREF_KEY_CLICK_DELAY, Constants.DEFAULT_CLICK_DELAY_MS).toFloat()
                 )
             }
         }
@@ -71,13 +69,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun onClickDelayChange(delay: Float) {
-        viewModelScope.launch {
-            sharedPrefs.edit { putInt(Constants.PREF_KEY_CLICK_DELAY, delay.toInt()) }
-            _uiState.update { it.copy(clickDelay = delay) }
-        }
-    }
-    
     private fun isAccessibilityServiceEnabled(context: Context, service: Class<*>): Boolean {
         try {
             val enabledServices = Settings.Secure.getString(

@@ -101,8 +101,7 @@ class EventsService : AccessibilityService() {
                         hasVolumeDecreased = false
                         pendingVolumeDownRunnable = null
                     }
-                    val clickDelay = sharedPrefs.getInt(Constants.PREF_KEY_CLICK_DELAY, Constants.DEFAULT_CLICK_DELAY_MS).toLong()
-                    handler.postDelayed(pendingVolumeDownRunnable!!, clickDelay)
+                    handler.postDelayed(pendingVolumeDownRunnable!!, Constants.DEFAULT_CLICK_DELAY_MS.toLong())
                 }
             }
         } catch (e: Exception) {
