@@ -30,19 +30,21 @@ class EventsService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-        displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        sharedPrefs = getSharedPreferences("CoverSpin", MODE_PRIVATE)
+        displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
 
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
                 val serviceContext = this@EventsService
                 if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
-                    val shouldRotate = EngineActivity.loadUserPrefRotation(serviceContext)
+                    val shouldRotate = EngineActivity.loadUserPrefRotation()
                     if(!EngineActivity.setRotationEnabled(shouldRotate)) {
                         showToast(serviceContext, "Initializing...")
                         val startIntent = Intent(serviceContext, EngineActivity::class.java)
                         startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         startActivity(startIntent)
+                        if (!shouldRotate)
+                            EngineActivity.setNewUserPrefRotation(true)
                     }
                 }
             }
@@ -81,14 +83,14 @@ class EventsService : AccessibilityService() {
                     handler.removeCallbacks(pendingVolumeDownRunnable!!)
                     pendingVolumeDownRunnable = null
                     restoreVolume()
-                    val newValue = !EngineActivity.loadUserPrefRotation(this)
+                    val newValue = !EngineActivity.loadUserPrefRotation()
                     if (!EngineActivity.setRotationEnabled(newValue)) {
                         val intent = Intent(this, EngineActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         startActivity(intent)
                     }
                     showToast(this, if (newValue) "Rotation enabled" else "Rotation disabled")
-                    EngineActivity.setNewUserPrefRotation(this, newValue)
+                    EngineActivity.setNewUserPrefRotation(newValue)
                     return true
                 } else {
                     hasVolumeDecreased = true

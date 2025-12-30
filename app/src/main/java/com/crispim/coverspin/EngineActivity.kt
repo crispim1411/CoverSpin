@@ -3,8 +3,10 @@ package com.crispim.coverspin
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.graphics.PixelFormat
+import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -15,28 +17,31 @@ import java.lang.ref.WeakReference
 class EngineActivity : Activity() {
 
     companion object {
+
+        // variables
         private var overlayViewRef: WeakReference<View>? = null
-        private val overlayView: View?
-            get() = overlayViewRef?.get()
-
-
         private var rotationEnabled: Boolean = true;
 
+        // Getters
+        private val overlayView: View?
+            get() = overlayViewRef?.get()
         val isRotationEnabled: Boolean
             get() = isOverlayActive && rotationEnabled
-
         val isOverlayActive: Boolean
             get() = overlayView != null
 
-        fun setNewUserPrefRotation(context: Context, enable: Boolean) {
-            context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
-                .edit { putBoolean("IS_ROTATION_ENABLED", enable) }
+        // Services
+        private lateinit var sharedPrefs: SharedPreferences
+        private lateinit var displayManager: DisplayManager
+        private lateinit var windowManagerSvc: WindowManager
+
+        fun setNewUserPrefRotation(enable: Boolean) {
+            sharedPrefs.edit { putBoolean("IS_ROTATION_ENABLED", enable) }
             rotationEnabled = enable
         }
 
-        fun loadUserPrefRotation(context: Context) : Boolean {
-            rotationEnabled = context.getSharedPreferences("CoverSpin", MODE_PRIVATE)
-                .getBoolean("IS_ROTATION_ENABLED", true)
+        fun loadUserPrefRotation() : Boolean {
+            rotationEnabled = sharedPrefs.getBoolean("IS_ROTATION_ENABLED", true)
             return rotationEnabled
         }
 
@@ -68,8 +73,6 @@ class EngineActivity : Activity() {
 
         private fun addRotationOverlay(context: Context) {
             try {
-                val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
-
                 val newView = View(context.applicationContext)
                 overlayViewRef = WeakReference(newView)
 
@@ -85,8 +88,7 @@ class EngineActivity : Activity() {
                 params.gravity = Gravity.TOP or Gravity.START
                 params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
                 rotationEnabled = true
-
-                windowManager.addView(newView, params)
+                windowManagerSvc.addView(newView, params)
             } catch (e: Exception) {
                 showToast(context, "addRotationOverlay Error: ${e.message}")
             }
@@ -111,9 +113,11 @@ class EngineActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val displayManager = getSystemService(DISPLAY_SERVICE) as android.hardware.display.DisplayManager
-        val mainDisplay = displayManager.getDisplay(0)
+        sharedPrefs = getSharedPreferences("CoverSpin", MODE_PRIVATE)
+        displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
+        windowManagerSvc = getSystemService(WINDOW_SERVICE) as WindowManager
 
+        val mainDisplay = displayManager.getDisplay(0)
         if (mainDisplay?.state == android.view.Display.STATE_ON) {
             finish()
             return
@@ -122,16 +126,16 @@ class EngineActivity : Activity() {
         if (!isOverlayActive)
             addRotationOverlay(this)
         
-        startRecentAppsService()
+        startEventsService()
         finish()
     }
 
-    private fun startRecentAppsService() {
+    private fun startEventsService() {
         try {
             val serviceIntent = Intent(this, EventsService::class.java)
             startForegroundService(serviceIntent)
         } catch (e: Exception) {
-            showToast(this, "startRecentAppsService Error: ${e.message}")
+            showToast(this, "startEventsService Error: ${e.message}")
         }
     }
 }

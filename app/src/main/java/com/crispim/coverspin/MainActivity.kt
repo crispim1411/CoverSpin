@@ -151,6 +151,11 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             )
         }
 
+        WarningCard(
+            title = "Warning",
+            message = "If the screen does not rotate, add the app to GoodLock and try again."
+        )
+
         if (!uiState.hasOverlayPermission || !uiState.hasAccessibilityPermission) {
             InfoCard(title = "Required Permissions") {
                 if (!uiState.hasOverlayPermission) {
@@ -179,11 +184,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         }
 
         if (allPermissionsGranted) {
-            WarningCard(
-                title = "Warning",
-                message = "If the screen does not rotate, add the app to GoodLock and try again."
-            )
-
             InfoCard(title = "Settings") {
                 Column {
                     SettingRowSwitch(
