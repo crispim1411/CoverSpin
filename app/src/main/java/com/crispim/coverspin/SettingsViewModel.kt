@@ -2,12 +2,20 @@ package com.crispim.coverspin
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.hardware.display.DisplayManager
 import android.provider.Settings
-import android.text.TextUtils
+import android.view.Display
+import android.view.KeyEvent
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import com.crispim.coverspin.activities.EngineActivity
+import com.crispim.coverspin.services.CacheHelper
+import com.crispim.coverspin.services.EventsService
+import com.crispim.coverspin.services.ToastHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,8 +26,10 @@ data class SettingsUiState(
     val isEngineRunning: Boolean = false,
     val hasOverlayPermission: Boolean = false,
     val hasAccessibilityPermission: Boolean = false,
-    val isRotationEnabled: Boolean = true,
     val volumeShortcutsEnabled: Boolean = false,
+    val isGestureButtonEnabled: Boolean = true,
+    val debugMessagesEnabled: Boolean = false,
+    val isInnerScreen: Boolean = true
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -27,11 +37,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    private val sharedPrefs: SharedPreferences =
-        application.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+    private var toastHelper: ToastHelper? = null
+    private val cacheHelper: CacheHelper =
+        CacheHelper(application.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE))
+    private val displayManager = application.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
     init {
         loadInitialState()
+        if (cacheHelper.isDebugMessagesEnabled())
+            toastHelper = ToastHelper(application)
     }
 
     fun onResume() {
@@ -45,51 +59,69 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     isEngineRunning = EngineActivity.isOverlayActive,
                     hasOverlayPermission = Settings.canDrawOverlays(getApplication()),
                     hasAccessibilityPermission = isAccessibilityServiceEnabled(getApplication(), EventsService::class.java),
-                    isRotationEnabled = EngineActivity.isRotationEnabled,
-                    volumeShortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, false),
+                    volumeShortcutsEnabled = cacheHelper.isVolumeShortcutsEnabled(),
+                    isGestureButtonEnabled = cacheHelper.isGestureButtonEnabled(),
+                    debugMessagesEnabled = cacheHelper.isDebugMessagesEnabled(),
+                    isInnerScreen = displayManager.getDisplay(0)?.state == Display.STATE_ON
                 )
             }
         }
     }
 
-    fun onRotationEnabledChange(isEnabled: Boolean) {
+    fun onStartEngine() {
         viewModelScope.launch {
-            sharedPrefs.edit { putBoolean(Constants.PREF_KEY_ROTATION_ENABLED, isEnabled) }
-            _uiState.update { it.copy(isRotationEnabled = isEnabled) }
             if (_uiState.value.isEngineRunning) {
-                EngineActivity.setRotationEnabled(isEnabled)
+                toastHelper?.show("Already running")
+            } else {
+                val intent = Intent(application, EngineActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                application.startActivity(intent)
+                toastHelper?.show("Starting...")
             }
         }
     }
 
     fun onVolumeShortcutsEnabledChange(isEnabled: Boolean) {
         viewModelScope.launch {
-            sharedPrefs.edit { putBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, isEnabled) }
+            cacheHelper.setVolumeShortcutsEnabled(isEnabled)
             _uiState.update { it.copy(volumeShortcutsEnabled = isEnabled) }
         }
     }
 
-    private fun isAccessibilityServiceEnabled(context: Context, service: Class<*>): Boolean {
-        try {
-            val enabledServices = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-            ) ?: return false
-
-            val colonSplitter = TextUtils.SimpleStringSplitter(':')
-            colonSplitter.setString(enabledServices)
-
-            val componentName = android.content.ComponentName(context, service)
-            val flatName = componentName.flattenToString()
-
-            while (colonSplitter.hasNext()) {
-                val component = colonSplitter.next()
-                if (component.equals(flatName, ignoreCase = true)) {
-                    return true
-                }
+    fun onGestureButtonEnabledChange(context: Context, isEnabled: Boolean) {
+        viewModelScope.launch {
+            cacheHelper.setGestureButtonEnabled(isEnabled)
+            _uiState.update { it.copy(isGestureButtonEnabled = isEnabled) }
+            if (_uiState.value.isEngineRunning) {
+                EngineActivity.setGestureButtonEnabled(context, isEnabled)
             }
-        } catch (e: Exception) {
-            showToast(context, "isAccessibilityServiceEnabled Error: ${e.message}")
+        }
+    }
+
+    fun onDebugMessagesEnabledChange(isEnabled: Boolean) {
+        viewModelScope.launch {
+            cacheHelper.setDebugMessagesEnabled(isEnabled)
+            _uiState.update { it.copy(debugMessagesEnabled = isEnabled) }
+        }
+    }
+
+    private fun isAccessibilityServiceEnabled(context: Context, service: Class<*>): Boolean {
+        val enabledServices = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+
+        val colonSplitter = android.text.TextUtils.SimpleStringSplitter(':')
+        colonSplitter.setString(enabledServices)
+
+        val componentName = android.content.ComponentName(context, service)
+        val flatName = componentName.flattenToString()
+
+        while (colonSplitter.hasNext()) {
+            val component = colonSplitter.next()
+            if (component.equals(flatName, ignoreCase = true)) {
+                return true
+            }
         }
         return false
     }

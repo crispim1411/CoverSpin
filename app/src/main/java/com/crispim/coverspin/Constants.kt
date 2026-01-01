@@ -7,6 +7,8 @@ object Constants {
     // SharedPreferences Keys
     const val PREF_KEY_VOLUME_SHORTCUTS = "VOLUME_SHORTCUTS_ENABLED"
     const val PREF_KEY_ROTATION_ENABLED = "IS_ROTATION_ENABLED"
+    const val PREF_KEY_GESTURE_BUTTON_ENABLED = "GESTURE_BUTTON_ENABLED"
+    const val PREF_KEY_DEBUG_MESSAGES_ENABLED = "DEBUG_MESSAGES_ENABLED"
 
     // Default Values
     const val DEFAULT_CLICK_DELAY_MS = 300

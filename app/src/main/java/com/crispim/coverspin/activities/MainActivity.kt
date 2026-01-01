@@ -1,4 +1,4 @@
-package com.crispim.coverspin
+package com.crispim.coverspin.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,39 +7,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.ScreenRotation
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,6 +28,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.crispim.coverspin.SettingsViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -183,25 +160,47 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             }
         }
 
-        if (allPermissionsGranted) {
-            InfoCard(title = "Settings") {
-                Column {
-                    SettingRowSwitch(
-                        title = "Auto-rotation Active",
-                        subtitle = "Enables cover screen auto-rotation",
-                        checked = uiState.isRotationEnabled,
-                        onCheckedChange = { viewModel.onRotationEnabledChange(it) },
-                        enabled = uiState.isEngineRunning
-                    )
+        InfoCard(title = "Settings") {
+            Column {
+                SettingRowSwitch(
+                    title = "Volume Key Shortcut",
+                    subtitle = "Double press volume down to toggle rotation",
+                    checked = uiState.volumeShortcutsEnabled,
+                    onCheckedChange = { viewModel.onVolumeShortcutsEnabledChange(it) },
+                    enabled = allPermissionsGranted
+                )
 
-                    SettingDivider()
+                SettingDivider()
 
-                    SettingRowSwitch(
-                        title = "Volume Key Shortcut",
-                        subtitle = "Double press volume down to enable/disable auto-rotation",
-                        checked = uiState.volumeShortcutsEnabled,
-                        onCheckedChange = { viewModel.onVolumeShortcutsEnabledChange(it) }
-                    )
+                SettingRowSwitch(
+                    title = "Gesture Button",
+                    subtitle = "Show a floating button to toggle rotation",
+                    checked = uiState.isGestureButtonEnabled,
+                    onCheckedChange = { viewModel.onGestureButtonEnabledChange(context, it) },
+                    enabled = allPermissionsGranted && uiState.isEngineRunning
+                )
+
+                SettingDivider()
+
+                SettingRowSwitch(
+                    title = "Show debug messages",
+                    subtitle = "Display on-screen action logs",
+                    checked = uiState.debugMessagesEnabled,
+                    onCheckedChange = { viewModel.onDebugMessagesEnabledChange(it) },
+                    enabled = allPermissionsGranted
+                )
+
+                SettingDivider()
+
+                Button(
+                    onClick = { viewModel.onStartEngine() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = allPermissionsGranted && !uiState.isInnerScreen,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(text = "Start")
                 }
             }
         }

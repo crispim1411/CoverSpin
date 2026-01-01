@@ -1,28 +1,37 @@
-package com.crispim.coverspin
+package com.crispim.coverspin.services
 
 import android.accessibilityservice.AccessibilityService
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.hardware.display.DisplayManager
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
+import android.view.Display
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import com.crispim.coverspin.Constants
+import com.crispim.coverspin.activities.EngineActivity
+import com.crispim.coverspin.activities.EngineActivity.Companion.loadUserPrefRotation
+import com.crispim.coverspin.activities.EngineActivity.Companion.setNewUserPrefRotation
+import com.crispim.coverspin.activities.EngineActivity.Companion.setRotationEnabled
 
+@SuppressLint("AccessibilityPolicy")
 class EventsService : AccessibilityService() {
 
     private var pendingVolumeDownRunnable: Runnable? = null
-    private val handler = Handler(Looper.getMainLooper())
-    private lateinit var screenStateReceiver: BroadcastReceiver
-    private lateinit var audioManager: AudioManager
     private var hasVolumeDecreased: Boolean = false
 
-    private lateinit var sharedPrefs: SharedPreferences
+    // Services
+    private var toastHelper: ToastHelper? = null
+    private lateinit var cacheHelper: CacheHelper
     private lateinit var displayManager: DisplayManager
+    private lateinit var screenStateReceiver: BroadcastReceiver
+    private lateinit var audioManager: AudioManager
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
     override fun onInterrupt() {}
@@ -30,22 +39,20 @@ class EventsService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        sharedPrefs = getSharedPreferences("CoverSpin", MODE_PRIVATE)
+        cacheHelper = CacheHelper(getSharedPreferences("CoverSpin", MODE_PRIVATE))
         displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
+
+        if (cacheHelper.isDebugMessagesEnabled())
+            toastHelper = ToastHelper(this)
 
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
-                val serviceContext = this@EventsService
-                if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
-                    val shouldRotate = EngineActivity.loadUserPrefRotation()
-                    if(!EngineActivity.setRotationEnabled(shouldRotate)) {
-                        showToast(serviceContext, "Initializing...")
-                        val startIntent = Intent(serviceContext, EngineActivity::class.java)
-                        startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(startIntent)
-                        if (!shouldRotate)
-                            EngineActivity.setNewUserPrefRotation(true)
+                try {
+                    if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
+                        loadRotation()
                     }
+                } catch (e: Exception) {
+                    toastHelper?.show("onReceive Error: ${e.message}")
                 }
             }
         }
@@ -61,20 +68,20 @@ class EventsService : AccessibilityService() {
         try {
             unregisterReceiver(screenStateReceiver)
         } catch (e: Exception) {
-            showToast(this, "onDestroy Error: ${e.message}")
+            toastHelper?.show( "onDestroy Error: ${e.message}")
         }
         super.onDestroy()
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
         try {
-            val shortcutsEnabled = sharedPrefs.getBoolean(Constants.PREF_KEY_VOLUME_SHORTCUTS, true)
+            val shortcutsEnabled = cacheHelper.isVolumeShortcutsEnabled()
             val mainDisplay = displayManager.getDisplay(0)
 
             if (!shortcutsEnabled
                 || event.scanCode != Constants.SCAN_CODE_VOLUME_DOWN
                 || event.action == KeyEvent.ACTION_DOWN
-                || mainDisplay?.state == android.view.Display.STATE_ON) {
+                || mainDisplay?.state == Display.STATE_ON) {
                 return super.onKeyEvent(event)
             }
 
@@ -83,14 +90,7 @@ class EventsService : AccessibilityService() {
                     handler.removeCallbacks(pendingVolumeDownRunnable!!)
                     pendingVolumeDownRunnable = null
                     restoreVolume()
-                    val newValue = !EngineActivity.loadUserPrefRotation()
-                    if (!EngineActivity.setRotationEnabled(newValue)) {
-                        val intent = Intent(this, EngineActivity::class.java)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(intent)
-                    }
-                    showToast(this, if (newValue) "Rotation enabled" else "Rotation disabled")
-                    EngineActivity.setNewUserPrefRotation(newValue)
+                    invertRotation()
                     return true
                 } else {
                     hasVolumeDecreased = true
@@ -102,10 +102,37 @@ class EventsService : AccessibilityService() {
                 }
             }
         } catch (e: Exception) {
-            showToast(this, "onKeyEvent Error: ${e.message}")
+            toastHelper?.show("onKeyEvent Error: ${e.message}")
         }
 
         return super.onKeyEvent(event)
+    }
+
+    private fun loadRotation() {
+        val shouldRotate = loadUserPrefRotation()
+        if (!setRotationEnabled(shouldRotate)) {
+            toastHelper?.show("Initializing $shouldRotate")
+            val startIntent = Intent(this, EngineActivity::class.java)
+            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            this.startActivity(startIntent)
+            if (!shouldRotate)
+                setNewUserPrefRotation(true)
+        } else {
+            toastHelper?.show("Loaded $shouldRotate")
+        }
+    }
+
+    private fun invertRotation() {
+        val newValue = !loadUserPrefRotation()
+        if (!setRotationEnabled(newValue)) {
+            val intent = Intent(this, EngineActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            this.startActivity(intent)
+            if (!newValue)
+                setNewUserPrefRotation(true)
+        }
+        toastHelper?.show(if (newValue) "Rotation enabled" else "Rotation disabled")
+
     }
 
     private fun restoreVolume() {
@@ -118,7 +145,7 @@ class EventsService : AccessibilityService() {
                     0
                 )
             } catch (e: Exception) {
-                showToast(this, "Failed to restore volume: ${e.message}")
+                toastHelper?.show("Failed to restore volume: ${e.message}")
             } finally {
                 hasVolumeDecreased = false
             }
