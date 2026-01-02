@@ -21,7 +21,7 @@ class CacheHelper(private val sharedPrefs: SharedPreferences) {
     }
 
     fun isDebugMessagesEnabled(): Boolean {
-        return sharedPrefs.getBoolean(Constants.PREF_KEY_DEBUG_MESSAGES_ENABLED, true)
+        return sharedPrefs.getBoolean(Constants.PREF_KEY_DEBUG_MESSAGES_ENABLED, false)
     }
 
     fun isKeepScreenOn(): Boolean {

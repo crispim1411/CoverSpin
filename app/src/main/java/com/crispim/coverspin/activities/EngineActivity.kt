@@ -33,6 +33,10 @@ class EngineActivity : Activity() {
         private var gestureOverlayViewRef: WeakReference<View>? = null
         private var keepScreenOn: Boolean = false
 
+        // Timer for temporary gesture button
+        private val hideButtonHandler = Handler(Looper.getMainLooper())
+        private var hideButtonRunnable: Runnable? = null
+
         // Getters
         private val overlayView: View?
             get() = overlayViewRef?.get()
@@ -45,6 +49,24 @@ class EngineActivity : Activity() {
         private lateinit var cacheHelper: CacheHelper
         private lateinit var displayManager: DisplayManager
         private lateinit var windowManagerSvc: WindowManager
+
+        private val displayListener = object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) {}
+            override fun onDisplayRemoved(displayId: Int) {}
+
+            override fun onDisplayChanged(displayId: Int) {
+                val context = overlayView?.context ?: return
+
+                if (!cacheHelper.isGestureButtonEnabled()) return
+
+                hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
+
+                addGestureOverlay(context)
+
+                hideButtonRunnable = Runnable { removeGestureOverlay() }
+                hideButtonHandler.postDelayed(hideButtonRunnable!!, 5000)
+            }
+        }
 
         fun setNewUserPrefRotation(enabled: Boolean) {
             cacheHelper.setRotationEnabled(enabled)
@@ -88,7 +110,7 @@ class EngineActivity : Activity() {
                         params.screenOrientation = newOrientation
                         windowManagerSvc.updateViewLayout(view, params)
                     }
-                } ?: addGestureOverlay(overlayView!!.context)
+                }
                 setNewUserPrefRotation(enabled)
                 updateGestureButtonIcon(enabled)
                 return true
@@ -98,11 +120,7 @@ class EngineActivity : Activity() {
         }
 
         fun setGestureButtonEnabled(context: Context, isEnabled: Boolean) {
-            if (isEnabled) {
-                if (gestureOverlayView == null) {
-                    addGestureOverlay(context)
-                }
-            } else {
+            if (!isEnabled) {
                 removeGestureOverlay()
             }
         }
@@ -124,7 +142,6 @@ class EngineActivity : Activity() {
 
         private fun addRotationOverlay(context: Context) {
             val newView = View(context.applicationContext)
-
             val params = WindowManager.LayoutParams(
                 0, 0,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -141,6 +158,7 @@ class EngineActivity : Activity() {
 
             windowManagerSvc.addView(newView, params)
             overlayViewRef = WeakReference(newView)
+            displayManager.registerDisplayListener(displayListener, null)
         }
 
         @SuppressLint("ClickableViewAccessibility")
@@ -257,11 +275,7 @@ class EngineActivity : Activity() {
         if (!isOverlayActive) {
             addRotationOverlay(this)
         }
-
-        if (cacheHelper.isGestureButtonEnabled() && isOverlayActive) {
-            setGestureButtonEnabled(this, true)
-        }
-
+        
         startEventsService()
         finish()
     }
@@ -269,5 +283,10 @@ class EngineActivity : Activity() {
     private fun startEventsService() {
         val serviceIntent = Intent(this, EventsService::class.java)
         startForegroundService(serviceIntent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
     }
 }
