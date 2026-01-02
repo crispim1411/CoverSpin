@@ -29,7 +29,8 @@ data class SettingsUiState(
     val volumeShortcutsEnabled: Boolean = false,
     val isGestureButtonEnabled: Boolean = true,
     val debugMessagesEnabled: Boolean = false,
-    val isInnerScreen: Boolean = true
+    val isInnerScreen: Boolean = true,
+    val keepScreenOn: Boolean = false,
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -62,7 +63,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     volumeShortcutsEnabled = cacheHelper.isVolumeShortcutsEnabled(),
                     isGestureButtonEnabled = cacheHelper.isGestureButtonEnabled(),
                     debugMessagesEnabled = cacheHelper.isDebugMessagesEnabled(),
-                    isInnerScreen = displayManager.getDisplay(0)?.state == Display.STATE_ON
+                    isInnerScreen = displayManager.getDisplay(0)?.state == Display.STATE_ON,
+                    keepScreenOn = cacheHelper.isKeepScreenOn()
                 )
             }
         }
@@ -94,6 +96,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _uiState.update { it.copy(isGestureButtonEnabled = isEnabled) }
             if (_uiState.value.isEngineRunning) {
                 EngineActivity.setGestureButtonEnabled(context, isEnabled)
+                EngineActivity.showGestureButtonHighlight(context)
             }
         }
     }
@@ -102,6 +105,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             cacheHelper.setDebugMessagesEnabled(isEnabled)
             _uiState.update { it.copy(debugMessagesEnabled = isEnabled) }
+        }
+    }
+
+    fun onKeepScreenOnChange(isEnabled: Boolean) {
+        viewModelScope.launch {
+            cacheHelper.setKeepScreenOn(isEnabled)
+            _uiState.update { it.copy(keepScreenOn = isEnabled) }
         }
     }
 

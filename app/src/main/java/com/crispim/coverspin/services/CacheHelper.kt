@@ -24,6 +24,10 @@ class CacheHelper(private val sharedPrefs: SharedPreferences) {
         return sharedPrefs.getBoolean(Constants.PREF_KEY_DEBUG_MESSAGES_ENABLED, true)
     }
 
+    fun isKeepScreenOn(): Boolean {
+        return sharedPrefs.getBoolean(Constants.PREF_KEY_KEEP_SCREEN_ON, false)
+    }
+
     // --- Writers ---
 
     fun setRotationEnabled(isEnabled: Boolean) {
@@ -40,5 +44,9 @@ class CacheHelper(private val sharedPrefs: SharedPreferences) {
 
     fun setDebugMessagesEnabled(isEnabled: Boolean) {
         sharedPrefs.edit { putBoolean(Constants.PREF_KEY_DEBUG_MESSAGES_ENABLED, isEnabled) }
+    }
+
+    fun setKeepScreenOn(isEnabled: Boolean) {
+        sharedPrefs.edit { putBoolean(Constants.PREF_KEY_KEEP_SCREEN_ON, isEnabled) }
     }
 }

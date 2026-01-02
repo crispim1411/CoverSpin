@@ -192,6 +192,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
                 SettingDivider()
 
+                SettingRowSwitch(
+                    title = "Keep screen on",
+                    subtitle = "Keeps the screen on indefinitely (applies on device restart)",
+                    checked = uiState.keepScreenOn,
+                    onCheckedChange = { viewModel.onKeepScreenOnChange(it) },
+                    enabled = allPermissionsGranted
+                )
+
+                SettingDivider()
+
                 Button(
                     onClick = { viewModel.onStartEngine() },
                     modifier = Modifier

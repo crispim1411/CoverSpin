@@ -31,6 +31,7 @@ class EngineActivity : Activity() {
         // variables
         private var overlayViewRef: WeakReference<View>? = null
         private var gestureOverlayViewRef: WeakReference<View>? = null
+        private var keepScreenOn: Boolean = false
 
         // Getters
         private val overlayView: View?
@@ -100,7 +101,6 @@ class EngineActivity : Activity() {
             if (isEnabled) {
                 if (gestureOverlayView == null) {
                     addGestureOverlay(context)
-                    showGestureButtonHighlight(context)
                 }
             } else {
                 removeGestureOverlay()
@@ -124,12 +124,14 @@ class EngineActivity : Activity() {
 
         private fun addRotationOverlay(context: Context) {
             val newView = View(context.applicationContext)
+
             val params = WindowManager.LayoutParams(
                 0, 0,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                         WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                        WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                        WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED or
+                        if (keepScreenOn) WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON else 0,
                 PixelFormat.TRANSLUCENT
             )
 
@@ -185,7 +187,7 @@ class EngineActivity : Activity() {
             updateGestureButtonIcon(loadUserPrefRotation())
         }
 
-        private fun showGestureButtonHighlight(context: Context) {
+        fun showGestureButtonHighlight(context: Context) {
             val highlightView = CutoutHighlightView(context.applicationContext)
 
             val params = WindowManager.LayoutParams(
@@ -249,6 +251,8 @@ class EngineActivity : Activity() {
             finish()
             return
         }
+
+        keepScreenOn = cacheHelper.isKeepScreenOn()
 
         if (!isOverlayActive) {
             addRotationOverlay(this)
