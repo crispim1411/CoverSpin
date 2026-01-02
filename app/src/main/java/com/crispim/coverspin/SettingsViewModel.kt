@@ -3,12 +3,9 @@ package com.crispim.coverspin
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.hardware.display.DisplayManager
 import android.provider.Settings
 import android.view.Display
-import android.view.KeyEvent
-import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
@@ -96,7 +93,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _uiState.update { it.copy(isGestureButtonEnabled = isEnabled) }
             if (_uiState.value.isEngineRunning) {
                 EngineActivity.setGestureButtonEnabled(context, isEnabled)
-                EngineActivity.showGestureButtonHighlight(context)
             }
         }
     }

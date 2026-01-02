@@ -20,6 +20,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
+import com.crispim.coverspin.Constants
 import com.crispim.coverspin.services.CacheHelper
 import com.crispim.coverspin.services.EventsService
 import java.lang.ref.WeakReference
@@ -56,17 +57,19 @@ class EngineActivity : Activity() {
 
             override fun onDisplayChanged(displayId: Int) {
                 val context = overlayView?.context ?: return
-
                 if (!cacheHelper.isGestureButtonEnabled()) return
 
-                hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
-
-                addGestureOverlay(context)
-
-                hideButtonRunnable = Runnable { removeGestureOverlay() }
-                hideButtonHandler.postDelayed(hideButtonRunnable!!, 5000)
+                showGestureButton(context)
             }
         }
+
+        private fun showGestureButton(context: Context) {
+            hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
+            addGestureOverlay(context)
+            hideButtonRunnable = Runnable { removeGestureOverlay() }
+            hideButtonHandler.postDelayed(hideButtonRunnable!!, Constants.SHOWING_GESTURE_BUTTON_MS.toLong())
+        }
+
 
         fun setNewUserPrefRotation(enabled: Boolean) {
             cacheHelper.setRotationEnabled(enabled)
@@ -76,7 +79,7 @@ class EngineActivity : Activity() {
             return cacheHelper.isRotationEnabled()
         }
 
-        fun invertRotation() {
+        private fun invertRotation() {
             val newValue = !loadUserPrefRotation()
             if (!setRotationEnabled(newValue)) {
                 val context = overlayView?.context ?: return;
@@ -120,7 +123,10 @@ class EngineActivity : Activity() {
         }
 
         fun setGestureButtonEnabled(context: Context, isEnabled: Boolean) {
-            if (!isEnabled) {
+            if (isEnabled) {
+                showGestureButton(context)
+                showGestureButtonHighlight(context)
+            } else {
                 removeGestureOverlay()
             }
         }
@@ -205,7 +211,7 @@ class EngineActivity : Activity() {
             updateGestureButtonIcon(loadUserPrefRotation())
         }
 
-        fun showGestureButtonHighlight(context: Context) {
+        private fun showGestureButtonHighlight(context: Context) {
             val highlightView = CutoutHighlightView(context.applicationContext)
 
             val params = WindowManager.LayoutParams(

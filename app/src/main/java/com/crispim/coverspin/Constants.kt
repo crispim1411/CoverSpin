@@ -13,4 +13,5 @@ object Constants {
 
     // Default Values
     const val DEFAULT_CLICK_DELAY_MS = 300
+    const val SHOWING_GESTURE_BUTTON_MS = 2000
 }

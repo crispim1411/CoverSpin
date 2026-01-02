@@ -184,7 +184,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
                 SettingRowSwitch(
                     title = "Show debug messages",
-                    subtitle = "Display on-screen action logs",
+                    subtitle = "Display on-screen action logs (applies on device restart)",
                     checked = uiState.debugMessagesEnabled,
                     onCheckedChange = { viewModel.onDebugMessagesEnabledChange(it) },
                     enabled = allPermissionsGranted
