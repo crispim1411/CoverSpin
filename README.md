@@ -21,13 +21,13 @@ The app has an option to intercept **Double Clicks** on the physical volume butt
 > *Note: Single clicks still adjust the volume normally. But this disables camera shutter by volume key, the torch functionality on the cover screen and increasing/decreasing the volume by holding the volume keys.*
 
 - **Shortcuts:** Toggle rotation on/off using physical volume buttons.
-- **Intelligent State:** Automatically pauses rotation when the screen is locked (to prevent Lockscreen bugs) and restores your preference upon unlocking.
 - **Visual Feedback:** Displays custom overlay toasts on the cover screen to confirm when rotation is enabled/disabled.
-- **Background Execution:** Runs as a lightweight Accessibility Service (`EventsService`) to monitor keys and screen state.
+- **Floating Gesture Button**: An optional, discreet on-screen button to manually toggle rotation.
+- **Keep Screen On**: An option to prevent the screen from automatically timing out and turning off while the service is active.
 
 ### Requirements
 
-- **Min SDK:** Android 8.0+ (Oreo).
+- **Device:** Flip 6 or 7
 - **Permissions:** Overlay Permission & Accessibility Service.
 
 ## Contribution

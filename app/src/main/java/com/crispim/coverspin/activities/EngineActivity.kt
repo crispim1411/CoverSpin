@@ -13,11 +13,7 @@ import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.Display
-import android.view.Gravity
-import android.view.MotionEvent
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.widget.FrameLayout
 import android.widget.ImageView
 import com.crispim.coverspin.Constants
@@ -48,24 +44,12 @@ class EngineActivity : Activity() {
 
         // Services
         private lateinit var cacheHelper: CacheHelper
-        private lateinit var displayManager: DisplayManager
+        private lateinit var orientationEventListener: OrientationEventListener
         private lateinit var windowManagerSvc: WindowManager
-
-        private val displayListener = object : DisplayManager.DisplayListener {
-            override fun onDisplayAdded(displayId: Int) {}
-            override fun onDisplayRemoved(displayId: Int) {}
-
-            override fun onDisplayChanged(displayId: Int) {
-                val context = overlayView?.context ?: return
-                if (!cacheHelper.isGestureButtonEnabled()) return
-
-                showGestureButton(context)
-            }
-        }
 
         private fun showGestureButton(context: Context) {
             hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
-            addGestureOverlay(context)
+            addGestureOverlay(context, loadUserPrefRotation())
             hideButtonRunnable = Runnable { removeGestureOverlay() }
             hideButtonHandler.postDelayed(hideButtonRunnable!!, Constants.SHOWING_GESTURE_BUTTON_MS.toLong())
         }
@@ -164,11 +148,11 @@ class EngineActivity : Activity() {
 
             windowManagerSvc.addView(newView, params)
             overlayViewRef = WeakReference(newView)
-            displayManager.registerDisplayListener(displayListener, null)
+            orientationEventListener.enable()
         }
 
         @SuppressLint("ClickableViewAccessibility")
-        private fun addGestureOverlay(context: Context) {
+        private fun addGestureOverlay(context: Context, enabled: Boolean) {
             if (gestureOverlayView != null) return
             val sizeInDp = 32
             val sizeInPx = (sizeInDp * context.resources.displayMetrics.density).toInt()
@@ -201,7 +185,12 @@ class EngineActivity : Activity() {
                 PixelFormat.TRANSLUCENT
             )
 
-            params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+            params.screenOrientation =
+                if (enabled) {
+                    ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_LOCKED
+                }
             params.gravity = Gravity.END or Gravity.CENTER_VERTICAL
             params.x = (16 * context.resources.displayMetrics.density).toInt()
             params.y = 0
@@ -229,6 +218,15 @@ class EngineActivity : Activity() {
             Handler(Looper.getMainLooper()).postDelayed({
                 windowManagerSvc.removeView(highlightView)
             }, 2000)
+        }
+
+        fun destroy(context: Context) {
+            removeGestureOverlay()
+            overlayView?.let {
+                windowManagerSvc.removeView(it)
+            }
+            overlayViewRef = null
+            orientationEventListener.disable()
         }
     }
 
@@ -267,8 +265,31 @@ class EngineActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         cacheHelper = CacheHelper(getSharedPreferences("CoverSpin", MODE_PRIVATE))
-        displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
+        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
         windowManagerSvc = getSystemService(WINDOW_SERVICE) as WindowManager
+
+        orientationEventListener = object : OrientationEventListener(this) {
+            private var lastQuadrant = -1
+
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN) return
+
+                val currentQuadrant = when (orientation) {
+                    in 45..134 -> 1  // Landscape
+                    in 135..224 -> 2 // Reverse Portrait
+                    in 225..314 -> 3  // Reverse Landscape
+                    else -> 0        // Portrait
+                }
+
+                if (currentQuadrant != lastQuadrant) {
+                    lastQuadrant = currentQuadrant
+                    
+                    val context = overlayView?.context ?: return
+                    if (!cacheHelper.isGestureButtonEnabled()) return
+                    showGestureButton(context)
+                }
+            }
+        }
 
         val mainDisplay = displayManager.getDisplay(0)
         if (mainDisplay?.state == Display.STATE_ON) {

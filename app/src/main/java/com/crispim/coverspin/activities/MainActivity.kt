@@ -177,7 +177,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     subtitle = "Show a floating button to toggle rotation",
                     checked = uiState.isGestureButtonEnabled,
                     onCheckedChange = { viewModel.onGestureButtonEnabledChange(context, it) },
-                    enabled = allPermissionsGranted && uiState.isEngineRunning
+                    enabled = allPermissionsGranted
                 )
 
                 SettingDivider()
