@@ -1,9 +1,9 @@
 package com.crispim.coverspin.models
 
 data class SettingsState(
+    val isEngineRunning: Boolean = false,
     val hasOverlayPermission: Boolean = false,
     val hasAccessibilityPermission: Boolean = false,
-    val isEngineRunning: Boolean = false,
     val volumeShortcutsEnabled: Boolean = false,
     val isGestureButtonEnabled: Boolean = false,
     val keepScreenOn: Boolean = false,

@@ -213,7 +213,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     enabled = allPermissionsGranted && !uiState.isInnerScreen,
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(text = "Start")
+                    Text(text = if (uiState.isEngineRunning) "Running..." else "Start")
                 }
             }
         }

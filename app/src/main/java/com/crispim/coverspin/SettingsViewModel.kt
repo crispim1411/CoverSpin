@@ -3,6 +3,8 @@ package com.crispim.coverspin
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.hardware.display.DisplayManager
+import android.view.Display
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import com.crispim.coverspin.services.CacheHelper
@@ -22,7 +24,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private var toastHelper: ToastHelper
     private val cacheHelper: CacheHelper =
-        CacheHelper(application.getSharedPreferences(Constants.APP_NAME, Context.MODE_PRIVATE))
+        CacheHelper(application.getSharedPreferences(
+            Constants.APP_NAME,
+            Context.MODE_PRIVATE))
+    private val displayManager =
+        application.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
     init {
         toastHelper = ToastHelper(application, cacheHelper)
@@ -36,6 +42,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private fun loadInitialState() {
         _uiState.update {
             it.copy(
+                isEngineRunning = EngineActivity.isOverlayActive,
+                isInnerScreen = displayManager.getDisplay(0)?.state == Display.STATE_ON,
                 hasOverlayPermission = cacheHelper.hasOverlayPermission(getApplication()),
                 hasAccessibilityPermission = cacheHelper.hasAccessibilityPermission(getApplication()),
                 volumeShortcutsEnabled = cacheHelper.isVolumeShortcutsEnabled(),
@@ -76,5 +84,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             application.startActivity(intent)
             toastHelper.show("Starting...", LogLevel.INFO)
         }
+        _uiState.update { it.copy(isEngineRunning = EngineActivity.isOverlayActive) }
     }
 }
