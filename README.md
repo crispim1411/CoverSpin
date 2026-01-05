@@ -16,10 +16,6 @@ The main goal is to allow screen orientation (Landscape/Portrait/Sensor) to work
 
 ## Features
 
-The app has an option to intercept **Double Clicks** on the physical volume buttons to control rotation without needing to open the app again.
-
-> *Note: Single clicks still adjust the volume normally. But this disables camera shutter by volume key, the torch functionality on the cover screen and increasing/decreasing the volume by holding the volume keys.*
-
 - **Force Auto-Rotation**: Enables full sensor-based auto-rotation on the cover screen, allowing both portrait and landscape modes.
 - **Floating Gesture Button**: A discreet on-screen button to manually toggle rotation. This button appears temporarily when you rotate your device, and can be permanently enabled or disabled in the settings.
 - **Keep Screen On**: An option to prevent the screen from automatically timing out and turning off while the service is active.
