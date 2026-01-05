@@ -18,7 +18,7 @@ import com.crispim.coverspin.activities.EngineActivity
 import com.crispim.coverspin.activities.EngineActivity.Companion.loadUserPrefRotation
 import com.crispim.coverspin.activities.EngineActivity.Companion.setNewUserPrefRotation
 import com.crispim.coverspin.activities.EngineActivity.Companion.setRotationEnabled
-import models.LogLevel
+import com.crispim.coverspin.models.LogLevel
 
 @SuppressLint("AccessibilityPolicy")
 class EventsService : AccessibilityService() {

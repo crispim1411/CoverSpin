@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import models.LogLevel
-import models.SettingsState
+import com.crispim.coverspin.models.LogLevel
+import com.crispim.coverspin.models.SettingsState
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 

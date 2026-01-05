@@ -1,4 +1,4 @@
-package models
+package com.crispim.coverspin.models
 
 enum class LogLevel(val value: Int, val displayName: String) {
     Error(0, "Error"),

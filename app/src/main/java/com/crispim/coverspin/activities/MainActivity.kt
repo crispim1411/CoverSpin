@@ -31,7 +31,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.crispim.coverspin.Constants
 import com.crispim.coverspin.SettingsViewModel
-import models.LogLevel
+import com.crispim.coverspin.models.LogLevel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: SettingsViewModel by viewModels()

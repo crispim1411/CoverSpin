@@ -11,7 +11,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.TextView
-import models.LogLevel
+import com.crispim.coverspin.models.LogLevel
 
 class ToastHelper(
     private val context: Context,

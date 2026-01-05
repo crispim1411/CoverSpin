@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.provider.Settings
 import androidx.core.content.edit
 import com.crispim.coverspin.Constants
-import models.LogLevel
+import com.crispim.coverspin.models.LogLevel
 
 class CacheHelper(private val sharedPrefs: SharedPreferences) {
 

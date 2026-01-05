@@ -1,4 +1,4 @@
-package models
+package com.crispim.coverspin.models
 
 data class SettingsState(
     val hasOverlayPermission: Boolean = false,
