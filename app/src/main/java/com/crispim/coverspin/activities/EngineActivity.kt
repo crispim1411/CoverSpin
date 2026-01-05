@@ -46,6 +46,7 @@ class EngineActivity : Activity() {
         private lateinit var cacheHelper: CacheHelper
         private lateinit var orientationEventListener: OrientationEventListener
         private lateinit var windowManagerSvc: WindowManager
+        private lateinit var displayManager: DisplayManager
 
         private fun showGestureButton(context: Context) {
             hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
@@ -256,6 +257,7 @@ class EngineActivity : Activity() {
 
         super.onCreate(savedInstanceState)
 
+        displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
         windowManagerSvc = getSystemService(WINDOW_SERVICE) as WindowManager
         cacheHelper = CacheHelper(getSharedPreferences(Constants.APP_NAME, MODE_PRIVATE))
         keepScreenOn = cacheHelper.isKeepScreenOn()
@@ -264,7 +266,7 @@ class EngineActivity : Activity() {
             private var lastQuadrant = -1
 
             override fun onOrientationChanged(orientation: Int) {
-                if (orientation == ORIENTATION_UNKNOWN) return
+                if (checkIfMainScreen() || orientation == ORIENTATION_UNKNOWN) return
 
                 val currentQuadrant = when (orientation) {
                     in 45..134 -> 1  // Landscape
@@ -283,18 +285,16 @@ class EngineActivity : Activity() {
             }
         }
 
-        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
-        val mainDisplay = displayManager.getDisplay(0)
-        if (mainDisplay?.state == Display.STATE_ON) {
-            finish()
-            return
-        }
-        if (!isOverlayActive) {
+        if (!isOverlayActive && !checkIfMainScreen()) {
             addRotationOverlay(this)
+            startEventsService()
         }
-        
-        startEventsService()
         finish()
+    }
+
+    private fun checkIfMainScreen(): Boolean {
+        val mainDisplay = displayManager.getDisplay(0)
+        return mainDisplay?.state == Display.STATE_ON
     }
 
     private fun startEventsService() {
