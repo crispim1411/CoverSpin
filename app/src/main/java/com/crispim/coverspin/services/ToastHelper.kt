@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.TextView
+import com.crispim.coverspin.Constants
 import com.crispim.coverspin.models.LogLevel
 
 class ToastHelper(
@@ -58,7 +59,7 @@ class ToastHelper(
 
                 toastHandler.postDelayed({
                     try { wm.removeView(textView) } catch (_: Exception) {}
-                }, 2000)
+                }, Constants.SHOWING_TOAST_MS.toLong())
             } catch (e: Exception) {
                 Log.e("showToast", "Failed to show toast: ${e.message}")
             }

@@ -2,10 +2,10 @@ package com.crispim.coverspin.models
 
 enum class LogLevel(val value: Int, val displayName: String) {
     Error(0, "Error"),
-    INFO(1, "Info"),
-    DEBUG(2, "Debug");
+    Info(1, "Info"),
+    Debug(2, "Debug");
 
     companion object {
-        fun fromInt(value: Int) = entries.find { it.value == value } ?: INFO
+        fun fromInt(value: Int) = entries.find { it.value == value } ?: Info
     }
 }

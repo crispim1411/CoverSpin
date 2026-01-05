@@ -48,13 +48,17 @@ class EngineActivity : Activity() {
         private lateinit var windowManagerSvc: WindowManager
         private lateinit var displayManager: DisplayManager
 
+        private fun checkIfMainScreen(): Boolean {
+            val mainDisplay = displayManager.getDisplay(0)
+            return mainDisplay?.state == Display.STATE_ON
+        }
+
         private fun showGestureButton(context: Context) {
             hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
             addGestureOverlay(context, loadUserPrefRotation())
             hideButtonRunnable = Runnable { removeGestureOverlay() }
             hideButtonHandler.postDelayed(hideButtonRunnable!!, Constants.SHOWING_GESTURE_BUTTON_MS.toLong())
         }
-
 
         fun setNewUserPrefRotation(enabled: Boolean) {
             cacheHelper.setRotationEnabled(enabled)
@@ -109,6 +113,8 @@ class EngineActivity : Activity() {
         }
 
         fun setGestureButtonEnabled(context: Context, isEnabled: Boolean) {
+            if (checkIfMainScreen()) return
+
             if (isEnabled) {
                 showGestureButton(context)
                 showGestureButtonHighlight(context)
@@ -290,11 +296,6 @@ class EngineActivity : Activity() {
             startEventsService()
         }
         finish()
-    }
-
-    private fun checkIfMainScreen(): Boolean {
-        val mainDisplay = displayManager.getDisplay(0)
-        return mainDisplay?.state == Display.STATE_ON
     }
 
     private fun startEventsService() {

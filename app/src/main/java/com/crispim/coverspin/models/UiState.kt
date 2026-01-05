@@ -6,6 +6,6 @@ data class SettingsState(
     val hasAccessibilityPermission: Boolean = false,
     val isGestureButtonEnabled: Boolean = true,
     val keepScreenOn: Boolean = false,
-    val logLevel: LogLevel = LogLevel.DEBUG,
+    val logLevel: LogLevel = LogLevel.Debug,
     val isInnerScreen: Boolean = false
 )

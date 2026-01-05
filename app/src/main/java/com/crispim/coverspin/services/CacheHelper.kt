@@ -24,7 +24,7 @@ class CacheHelper(private val sharedPrefs: SharedPreferences) {
     }
 
     fun getLogLevel(): LogLevel {
-        val levelInt = sharedPrefs.getInt(Constants.PREF_KEY_LOG_LEVEL, LogLevel.DEBUG.value)
+        val levelInt = sharedPrefs.getInt(Constants.PREF_KEY_LOG_LEVEL, LogLevel.Debug.value)
         return LogLevel.fromInt(levelInt)
     }
 

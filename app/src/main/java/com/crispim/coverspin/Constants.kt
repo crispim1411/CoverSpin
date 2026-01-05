@@ -10,6 +10,6 @@ object Constants {
     const val PREF_KEY_KEEP_SCREEN_ON = "KEEP_SCREEN_ON_ENABLED"
 
     // Default Values
-    const val DEFAULT_CLICK_DELAY_MS = 300
     const val SHOWING_GESTURE_BUTTON_MS = 2000
+    const val SHOWING_TOAST_MS = 3000
 }

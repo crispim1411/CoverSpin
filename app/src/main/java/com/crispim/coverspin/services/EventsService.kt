@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.hardware.display.DisplayManager
 import android.view.accessibility.AccessibilityEvent
 import com.crispim.coverspin.Constants
 import com.crispim.coverspin.activities.EngineActivity
@@ -33,12 +32,8 @@ class EventsService : AccessibilityService() {
 
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
-                try {
-                    if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
-                        loadRotation()
-                    }
-                } catch (e: Exception) {
-                    toastHelper.show("onReceive Error: ${e.message}", LogLevel.Error)
+                if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
+                    loadRotation()
                 }
             }
         }
@@ -60,16 +55,20 @@ class EventsService : AccessibilityService() {
     }
 
     private fun loadRotation() {
-        val shouldRotate = loadUserPrefRotation()
-        if (!setRotationEnabled(shouldRotate)) {
-            toastHelper.show("Initializing $shouldRotate", LogLevel.DEBUG)
-            val startIntent = Intent(this, EngineActivity::class.java)
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            this.startActivity(startIntent)
-            if (!shouldRotate)
-                setNewUserPrefRotation(true)
-        } else {
-            toastHelper.show("Loaded $shouldRotate", LogLevel.DEBUG)
+        try {
+            val shouldRotate = loadUserPrefRotation()
+            if (!setRotationEnabled(shouldRotate)) {
+                toastHelper.show("Initializing $shouldRotate", LogLevel.Debug)
+                val startIntent = Intent(this, EngineActivity::class.java)
+                startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                this.startActivity(startIntent)
+                if (!shouldRotate)
+                    setNewUserPrefRotation(true)
+            } else {
+                toastHelper.show("Loaded $shouldRotate", LogLevel.Debug)
+            }
+        } catch (e: Exception) {
+            toastHelper.show("loadRotation Error: ${e.message}", LogLevel.Error)
         }
     }
 }

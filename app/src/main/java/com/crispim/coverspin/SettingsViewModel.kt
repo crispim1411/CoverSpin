@@ -40,44 +40,66 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun loadInitialState() {
-        _uiState.update {
-            it.copy(
-                isEngineRunning = EngineActivity.isOverlayActive,
-                isInnerScreen = displayManager.getDisplay(0)?.state == Display.STATE_ON,
-                hasOverlayPermission = cacheHelper.hasOverlayPermission(getApplication()),
-                hasAccessibilityPermission = cacheHelper.hasAccessibilityPermission(getApplication()),
-                isGestureButtonEnabled = cacheHelper.isGestureButtonEnabled(),
-                keepScreenOn = cacheHelper.isKeepScreenOn(),
-                logLevel = cacheHelper.getLogLevel()
-            )
+        try {
+            _uiState.update {
+                it.copy(
+                    isEngineRunning = EngineActivity.isOverlayActive,
+                    isInnerScreen = displayManager.getDisplay(0)?.state == Display.STATE_ON,
+                    hasOverlayPermission = cacheHelper.hasOverlayPermission(getApplication()),
+                    hasAccessibilityPermission = cacheHelper.hasAccessibilityPermission(
+                        getApplication()
+                    ),
+                    isGestureButtonEnabled = cacheHelper.isGestureButtonEnabled(),
+                    keepScreenOn = cacheHelper.isKeepScreenOn(),
+                    logLevel = cacheHelper.getLogLevel()
+                )
+            }
+        } catch (e: Exception) {
+            toastHelper.show("loadInitialState error: ${e.message}", LogLevel.Error)
         }
     }
 
     fun onGestureButtonEnabledChange(context: Context, isEnabled: Boolean) {
-        cacheHelper.setGestureButtonEnabled(isEnabled)
-        _uiState.update { it.copy(isGestureButtonEnabled = isEnabled) }
-        EngineActivity.setGestureButtonEnabled(context, isEnabled)
+        try {
+            cacheHelper.setGestureButtonEnabled(isEnabled)
+            _uiState.update { it.copy(isGestureButtonEnabled = isEnabled) }
+            EngineActivity.setGestureButtonEnabled(context, isEnabled)
+        } catch (e: Exception) {
+            toastHelper.show("onGestureButtonEnabledChange error: ${e.message}", LogLevel.Error)
+        }
     }
 
     fun onKeepScreenOnChange(isEnabled: Boolean) {
-        cacheHelper.setKeepScreenOn(isEnabled)
-        _uiState.update { it.copy(keepScreenOn = isEnabled) }
+        try {
+            cacheHelper.setKeepScreenOn(isEnabled)
+            _uiState.update { it.copy(keepScreenOn = isEnabled) }
+        } catch (e: Exception) {
+            toastHelper.show("onKeepScreenOnChange error: ${e.message}", LogLevel.Error)
+        }
     }
 
     fun onLogLevelChange(logLevel: LogLevel) {
-        cacheHelper.setLogLevel(logLevel)
-        _uiState.update { it.copy(logLevel = logLevel) }
+        try {
+            cacheHelper.setLogLevel(logLevel)
+            _uiState.update { it.copy(logLevel = logLevel) }
+        } catch (e: Exception) {
+            toastHelper.show("onLogLevelChange error: ${e.message}", LogLevel.Error)
+        }
     }
 
     fun onStartEngine() {
-        if (_uiState.value.isEngineRunning) {
-            toastHelper.show("Already running", LogLevel.INFO)
-        } else {
-            val intent = Intent(application, EngineActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            application.startActivity(intent)
-            toastHelper.show("Starting...", LogLevel.INFO)
+        try {
+            if (_uiState.value.isEngineRunning) {
+                toastHelper.show("Already running", LogLevel.Info)
+            } else {
+                val intent = Intent(application, EngineActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                application.startActivity(intent)
+                toastHelper.show("Starting...", LogLevel.Info)
+            }
+            _uiState.update { it.copy(isEngineRunning = EngineActivity.isOverlayActive) }
+        } catch (e: Exception) {
+            toastHelper.show("onStartEngine error: ${e.message}", LogLevel.Error)
         }
-        _uiState.update { it.copy(isEngineRunning = EngineActivity.isOverlayActive) }
     }
 }
