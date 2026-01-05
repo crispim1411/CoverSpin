@@ -46,17 +46,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 isInnerScreen = displayManager.getDisplay(0)?.state == Display.STATE_ON,
                 hasOverlayPermission = cacheHelper.hasOverlayPermission(getApplication()),
                 hasAccessibilityPermission = cacheHelper.hasAccessibilityPermission(getApplication()),
-                volumeShortcutsEnabled = cacheHelper.isVolumeShortcutsEnabled(),
                 isGestureButtonEnabled = cacheHelper.isGestureButtonEnabled(),
                 keepScreenOn = cacheHelper.isKeepScreenOn(),
                 logLevel = cacheHelper.getLogLevel()
             )
         }
-    }
-
-    fun onVolumeShortcutsEnabledChange(isEnabled: Boolean) {
-        cacheHelper.setVolumeShortcutsEnabled(isEnabled)
-        _uiState.update { it.copy(volumeShortcutsEnabled = isEnabled) }
     }
 
     fun onGestureButtonEnabledChange(context: Context, isEnabled: Boolean) {

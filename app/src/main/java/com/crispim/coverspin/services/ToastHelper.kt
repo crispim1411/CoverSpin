@@ -57,7 +57,7 @@ class ToastHelper(
                 wm.addView(textView, params)
 
                 toastHandler.postDelayed({
-                    try { wm.removeView(textView) } catch (e: Exception) {}
+                    try { wm.removeView(textView) } catch (_: Exception) {}
                 }, 2000)
             } catch (e: Exception) {
                 Log.e("showToast", "Failed to show toast: ${e.message}")

@@ -165,16 +165,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         InfoCard(title = "Settings") {
             Column {
                 SettingRowSwitch(
-                    title = "Volume Key Shortcut",
-                    subtitle = "Double press volume down to toggle rotation",
-                    checked = uiState.volumeShortcutsEnabled,
-                    onCheckedChange = { viewModel.onVolumeShortcutsEnabledChange(it) },
-                    enabled = allPermissionsGranted
-                )
-
-                SettingDivider()
-
-                SettingRowSwitch(
                     title = "Gesture Button",
                     subtitle = "Show a floating button to toggle rotation",
                     checked = uiState.isGestureButtonEnabled,

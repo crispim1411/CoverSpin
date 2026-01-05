@@ -6,7 +6,7 @@ This is a utility app designed to provide screen rotation control on the cover s
 
 ### Data collected by the app
 
-I hereby state that CoverSpin **does not collect, store, or transmit any personally identifiable information**. All data created by you (the user), such as app preferences (like enabling or disabling shortcuts), is stored locally in your device's private storage. This data can be erased at any time by clearing the app's data or uninstalling it. No analytics or tracking software is present in the app.
+I hereby state that CoverSpin **does not collect, store, or transmit any personally identifiable information**. All data created by you (the user), such as your app preferences, is stored locally in your device's private storage. This data can be erased at any time by clearing the app's data or uninstalling it. No analytics or tracking software is present in the app.
 
 ### Explanation of permissions requested in the app
 
@@ -15,8 +15,8 @@ The list of permissions required by the app can be found in the `AndroidManifest
 | Permission | Why it is required |
 | :---: | --- |
 | `android.permission.SYSTEM_ALERT_WINDOW` | This is a core permission for the app's main feature. It allows CoverSpin to create an invisible overlay on the screen. This overlay is what forces the screen to rotate based on the device's sensors, even on the cover screen where rotation is normally locked by the system. |
-| `android.permission.BIND_ACCESSIBILITY_SERVICE` | This permission is required **only** for the volume button shortcuts feature. The Accessibility Service listens for `KeyEvent`s from the physical volume buttons to detect single and double presses. **The service does not monitor, log, or store any text you type or any other content on your screen.** Its sole purpose is to provide a shortcut to enable/disable screen rotation. The app declares itself to the Android system as not being a primary accessibility tool (`isAccessibilityTool=\"false\"`). |
-| `android.permission.FOREGROUND_SERVICE` & `android.permission.FOREGROUND_SERVICE_SPECIAL_USE` | These permissions allow CoverSpin's rotation and key-listening services to run reliably in the background. This is necessary for the app to function when the cover screen is active and the main configuration app is not visible. |
+| `android.permission.BIND_ACCESSIBILITY_SERVICE` | This permission is required to ensure the main rotation service runs reliably in the background. Modern Android versions can be aggressive in closing background services to save battery, and the Accessibility Service API provides a stable way for CoverSpin's overlay to remain active. **The service does not monitor, log, or store any text you type or any other content on your screen.** Its sole purpose is to maintain the lifecycle of the app's core service. |
+| `android.permission.FOREGROUND_SERVICE` & `android.permission.FOREGROUND_SERVICE_SPECIAL_USE` | These permissions allow CoverSpin's rotation service to run reliably in the background. This is necessary for the app to function when the cover screen is active and the main configuration app is not visible. |
 | `android.permission.RECEIVE_BOOT_COMPLETED` | This allows CoverSpin to automatically restart its service when you reboot your device. This ensures you don't have to manually open the app and start the service every time your phone turns on. |
 
 <hr style="border:1px solid gray">

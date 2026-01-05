@@ -4,8 +4,7 @@ data class SettingsState(
     val isEngineRunning: Boolean = false,
     val hasOverlayPermission: Boolean = false,
     val hasAccessibilityPermission: Boolean = false,
-    val volumeShortcutsEnabled: Boolean = false,
-    val isGestureButtonEnabled: Boolean = false,
+    val isGestureButtonEnabled: Boolean = true,
     val keepScreenOn: Boolean = false,
     val logLevel: LogLevel = LogLevel.DEBUG,
     val isInnerScreen: Boolean = false
