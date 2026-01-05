@@ -20,14 +20,15 @@ The app has an option to intercept **Double Clicks** on the physical volume butt
 
 > *Note: Single clicks still adjust the volume normally. But this disables camera shutter by volume key, the torch functionality on the cover screen and increasing/decreasing the volume by holding the volume keys.*
 
-- **Shortcuts:** Toggle rotation on/off using physical volume buttons.
-- **Intelligent State:** Automatically pauses rotation when the screen is locked (to prevent Lockscreen bugs) and restores your preference upon unlocking.
-- **Visual Feedback:** Displays custom overlay toasts on the cover screen to confirm when rotation is enabled/disabled.
-- **Background Execution:** Runs as a lightweight Accessibility Service (`EventsService`) to monitor keys and screen state.
+- **Force Auto-Rotation**: Enables full sensor-based auto-rotation on the cover screen, allowing both portrait and landscape modes.
+- **Floating Gesture Button**: A discreet on-screen button to manually toggle rotation. This button appears temporarily when you rotate your device, and can be permanently enabled or disabled in the settings.
+- **Keep Screen On**: An option to prevent the screen from automatically timing out and turning off while the service is active.
+
+*OBS: If you are using a Samsung device and screen rotation is not working, you may need to add **CoverSpin** to the **GoodLock** app list (often found in the MultiStar module). This allows the app to override the default system behavior.*
 
 ### Requirements
 
-- **Min SDK:** Android 8.0+ (Oreo).
+- **Device:** Flip 6 or 7
 - **Permissions:** Overlay Permission & Accessibility Service.
 
 ## Contribution

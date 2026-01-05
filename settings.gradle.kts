@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CoverSping"
+rootProject.name = "CoverSpin"
 include(":app")
  
