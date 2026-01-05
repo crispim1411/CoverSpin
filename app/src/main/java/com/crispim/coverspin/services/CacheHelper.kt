@@ -1,8 +1,11 @@
 package com.crispim.coverspin.services
 
+import android.content.Context
 import android.content.SharedPreferences
+import android.provider.Settings
 import androidx.core.content.edit
 import com.crispim.coverspin.Constants
+import models.LogLevel
 
 class CacheHelper(private val sharedPrefs: SharedPreferences) {
 
@@ -20,12 +23,38 @@ class CacheHelper(private val sharedPrefs: SharedPreferences) {
         return sharedPrefs.getBoolean(Constants.PREF_KEY_GESTURE_BUTTON_ENABLED, true)
     }
 
-    fun isDebugMessagesEnabled(): Boolean {
-        return sharedPrefs.getBoolean(Constants.PREF_KEY_DEBUG_MESSAGES_ENABLED, false)
-    }
-
     fun isKeepScreenOn(): Boolean {
         return sharedPrefs.getBoolean(Constants.PREF_KEY_KEEP_SCREEN_ON, false)
+    }
+
+    fun getLogLevel(): LogLevel {
+        val levelInt = sharedPrefs.getInt(Constants.PREF_KEY_LOG_LEVEL, LogLevel.DEBUG.value)
+        return LogLevel.fromInt(levelInt)
+    }
+
+    fun hasOverlayPermission(context: Context): Boolean {
+        return Settings.canDrawOverlays(context)
+    }
+
+    fun hasAccessibilityPermission(context: Context): Boolean {
+        val enabledServices = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+
+        val colonSplitter = android.text.TextUtils.SimpleStringSplitter(':')
+        colonSplitter.setString(enabledServices)
+
+        val componentName = android.content.ComponentName(context, EventsService::class.java)
+        val flatName = componentName.flattenToString()
+
+        while (colonSplitter.hasNext()) {
+            val component = colonSplitter.next()
+            if (component.equals(flatName, ignoreCase = true)) {
+                return true
+            }
+        }
+        return false
     }
 
     // --- Writers ---
@@ -42,11 +71,11 @@ class CacheHelper(private val sharedPrefs: SharedPreferences) {
         sharedPrefs.edit { putBoolean(Constants.PREF_KEY_GESTURE_BUTTON_ENABLED, isEnabled) }
     }
 
-    fun setDebugMessagesEnabled(isEnabled: Boolean) {
-        sharedPrefs.edit { putBoolean(Constants.PREF_KEY_DEBUG_MESSAGES_ENABLED, isEnabled) }
-    }
-
     fun setKeepScreenOn(isEnabled: Boolean) {
         sharedPrefs.edit { putBoolean(Constants.PREF_KEY_KEEP_SCREEN_ON, isEnabled) }
+    }
+
+    fun setLogLevel(logLevel: LogLevel) {
+        sharedPrefs.edit { putInt(Constants.PREF_KEY_LOG_LEVEL, logLevel.value) }
     }
 }

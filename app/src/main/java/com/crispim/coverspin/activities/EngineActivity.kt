@@ -97,7 +97,8 @@ class EngineActivity : Activity() {
                         params.screenOrientation = newOrientation
                         windowManagerSvc.updateViewLayout(view, params)
                     }
-                }
+                } ?: return false
+
                 setNewUserPrefRotation(enabled)
                 updateGestureButtonIcon(enabled)
                 return true
@@ -219,15 +220,6 @@ class EngineActivity : Activity() {
                 windowManagerSvc.removeView(highlightView)
             }, 2000)
         }
-
-        fun destroy(context: Context) {
-            removeGestureOverlay()
-            overlayView?.let {
-                windowManagerSvc.removeView(it)
-            }
-            overlayViewRef = null
-            orientationEventListener.disable()
-        }
     }
 
     private class CutoutHighlightView(context: Context) : View(context) {
@@ -264,9 +256,9 @@ class EngineActivity : Activity() {
 
         super.onCreate(savedInstanceState)
 
-        cacheHelper = CacheHelper(getSharedPreferences("CoverSpin", MODE_PRIVATE))
-        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
         windowManagerSvc = getSystemService(WINDOW_SERVICE) as WindowManager
+        cacheHelper = CacheHelper(getSharedPreferences(Constants.APP_NAME, MODE_PRIVATE))
+        keepScreenOn = cacheHelper.isKeepScreenOn()
 
         orientationEventListener = object : OrientationEventListener(this) {
             private var lastQuadrant = -1
@@ -291,14 +283,12 @@ class EngineActivity : Activity() {
             }
         }
 
+        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
         val mainDisplay = displayManager.getDisplay(0)
         if (mainDisplay?.state == Display.STATE_ON) {
             finish()
             return
         }
-
-        keepScreenOn = cacheHelper.isKeepScreenOn()
-
         if (!isOverlayActive) {
             addRotationOverlay(this)
         }

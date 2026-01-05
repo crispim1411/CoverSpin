@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material3.*
@@ -28,10 +29,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.crispim.coverspin.Constants
 import com.crispim.coverspin.SettingsViewModel
+import models.LogLevel
 
 class MainActivity : ComponentActivity() {
-
     private val viewModel: SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,7 +114,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "CoverSpin",
+                text = Constants.APP_NAME,
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -182,11 +184,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
                 SettingDivider()
 
-                SettingRowSwitch(
-                    title = "Show debug messages",
-                    subtitle = "Display on-screen action logs (applies on device restart)",
-                    checked = uiState.debugMessagesEnabled,
-                    onCheckedChange = { viewModel.onDebugMessagesEnabledChange(it) },
+                SettingRowDropdown(
+                    title = "Log Level",
+                    subtitle = "Controls the level of on-screen messages",
+                    options = LogLevel.entries,
+                    selectedOption = uiState.logLevel,
+                    onOptionSelected = { viewModel.onLogLevelChange(it) },
                     enabled = allPermissionsGranted
                 )
 
@@ -244,6 +247,64 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun SettingRowDropdown(
+    title: String,
+    subtitle: String,
+    options: List<LogLevel>,
+    selectedOption: LogLevel,
+    onOptionSelected: (LogLevel) -> Unit,
+    enabled: Boolean = true
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+        }
+        Box {
+            OutlinedButton(
+                onClick = { expanded = true },
+                enabled = enabled,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(text = selectedOption.displayName)
+                Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown arrow")
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.displayName) },
+                        onClick = {
+                            onOptionSelected(option)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 

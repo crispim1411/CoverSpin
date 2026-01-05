@@ -18,6 +18,7 @@ import com.crispim.coverspin.activities.EngineActivity
 import com.crispim.coverspin.activities.EngineActivity.Companion.loadUserPrefRotation
 import com.crispim.coverspin.activities.EngineActivity.Companion.setNewUserPrefRotation
 import com.crispim.coverspin.activities.EngineActivity.Companion.setRotationEnabled
+import models.LogLevel
 
 @SuppressLint("AccessibilityPolicy")
 class EventsService : AccessibilityService() {
@@ -26,7 +27,7 @@ class EventsService : AccessibilityService() {
     private var hasVolumeDecreased: Boolean = false
 
     // Services
-    private var toastHelper: ToastHelper? = null
+    private lateinit var toastHelper: ToastHelper
     private lateinit var cacheHelper: CacheHelper
     private lateinit var displayManager: DisplayManager
     private lateinit var screenStateReceiver: BroadcastReceiver
@@ -39,11 +40,9 @@ class EventsService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        cacheHelper = CacheHelper(getSharedPreferences("CoverSpin", MODE_PRIVATE))
+        cacheHelper = CacheHelper(getSharedPreferences(Constants.APP_NAME, MODE_PRIVATE))
         displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
-
-        if (cacheHelper.isDebugMessagesEnabled())
-            toastHelper = ToastHelper(this)
+        toastHelper = ToastHelper(this, cacheHelper)
 
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
@@ -52,7 +51,7 @@ class EventsService : AccessibilityService() {
                         loadRotation()
                     }
                 } catch (e: Exception) {
-                    toastHelper?.show("onReceive Error: ${e.message}")
+                    toastHelper.show("onReceive Error: ${e.message}", LogLevel.Error)
                 }
             }
         }
@@ -68,7 +67,7 @@ class EventsService : AccessibilityService() {
         try {
             unregisterReceiver(screenStateReceiver)
         } catch (e: Exception) {
-            toastHelper?.show( "onDestroy Error: ${e.message}")
+            toastHelper.show( "onDestroy Error: ${e.message}", LogLevel.Error)
         }
         super.onDestroy()
     }
@@ -102,7 +101,7 @@ class EventsService : AccessibilityService() {
                 }
             }
         } catch (e: Exception) {
-            toastHelper?.show("onKeyEvent Error: ${e.message}")
+            toastHelper.show("onKeyEvent Error: ${e.message}", LogLevel.Error)
         }
 
         return super.onKeyEvent(event)
@@ -111,14 +110,14 @@ class EventsService : AccessibilityService() {
     private fun loadRotation() {
         val shouldRotate = loadUserPrefRotation()
         if (!setRotationEnabled(shouldRotate)) {
-            toastHelper?.show("Initializing $shouldRotate")
+            toastHelper.show("Initializing $shouldRotate", LogLevel.DEBUG)
             val startIntent = Intent(this, EngineActivity::class.java)
             startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             this.startActivity(startIntent)
             if (!shouldRotate)
                 setNewUserPrefRotation(true)
         } else {
-            toastHelper?.show("Loaded $shouldRotate")
+            toastHelper.show("Loaded $shouldRotate", LogLevel.DEBUG)
         }
     }
 
@@ -131,7 +130,12 @@ class EventsService : AccessibilityService() {
             if (!newValue)
                 setNewUserPrefRotation(true)
         }
-        toastHelper?.show(if (newValue) "Rotation enabled" else "Rotation disabled")
+        toastHelper.show(
+            if (newValue)
+                "Rotation enabled"
+            else
+                "Rotation disabled",
+            LogLevel.DEBUG)
 
     }
 
@@ -145,7 +149,7 @@ class EventsService : AccessibilityService() {
                     0
                 )
             } catch (e: Exception) {
-                toastHelper?.show("Failed to restore volume: ${e.message}")
+                toastHelper.show("Failed to restore volume: ${e.message}", LogLevel.Error)
             } finally {
                 hasVolumeDecreased = false
             }
