@@ -33,6 +33,8 @@ class EventsService : AccessibilityService() {
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
                 if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
+                    if (!EngineActivity.isOverlayActive)
+                        EngineActivity.initialize(context!!)
                     loadRotation()
                 }
             }
@@ -58,12 +60,8 @@ class EventsService : AccessibilityService() {
         try {
             val shouldRotate = loadUserPrefRotation()
             if (!setRotationEnabled(shouldRotate)) {
-                toastHelper.show("Initializing $shouldRotate", LogLevel.Debug)
-                val startIntent = Intent(this, EngineActivity::class.java)
-                startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                this.startActivity(startIntent)
-                if (!shouldRotate)
-                    setNewUserPrefRotation(true)
+                toastHelper.show("Error set rotation", LogLevel.Debug)
+                setNewUserPrefRotation(true)
             } else {
                 toastHelper.show("Loaded $shouldRotate", LogLevel.Debug)
             }

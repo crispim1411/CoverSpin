@@ -92,9 +92,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             if (_uiState.value.isEngineRunning) {
                 toastHelper.show("Already running", LogLevel.Info)
             } else {
-                val intent = Intent(application, EngineActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                application.startActivity(intent)
+                EngineActivity.initialize(application)
                 toastHelper.show("Starting...", LogLevel.Info)
             }
             _uiState.update { it.copy(isEngineRunning = EngineActivity.isOverlayActive) }

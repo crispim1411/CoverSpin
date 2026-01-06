@@ -48,6 +48,12 @@ class EngineActivity : Activity() {
         private lateinit var windowManagerSvc: WindowManager
         private lateinit var displayManager: DisplayManager
 
+        fun initialize(context: Context) {
+            val startIntent = Intent(context, EngineActivity::class.java)
+            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(startIntent)
+        }
+
         private fun checkIfMainScreen(): Boolean {
             val mainDisplay = displayManager.getDisplay(0)
             return mainDisplay?.state == Display.STATE_ON
@@ -72,9 +78,7 @@ class EngineActivity : Activity() {
             val newValue = !loadUserPrefRotation()
             if (!setRotationEnabled(newValue)) {
                 val context = overlayView?.context ?: return;
-                val intent = Intent(context, EngineActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
+                initialize(context)
                 if (!newValue)
                     setNewUserPrefRotation(true)
             }
@@ -132,7 +136,7 @@ class EngineActivity : Activity() {
 
         private fun updateGestureButtonIcon(isEnabled: Boolean) {
             (gestureOverlayView as? ImageView)?.let { imageView ->
-                val iconRes = if (isEnabled) R.drawable.ic_menu_rotate else R.drawable.ic_lock_lock
+                val iconRes = if (isEnabled) R.drawable.ic_popup_sync else R.drawable.ic_lock_idle_lock
                 imageView.setImageResource(iconRes)
                 imageView.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
             }
@@ -163,8 +167,9 @@ class EngineActivity : Activity() {
         private fun addGestureOverlay(context: Context, enabled: Boolean) {
             if (gestureOverlayView != null) return
             val sizeInDp = 32
-            val sizeInPx = (sizeInDp * context.resources.displayMetrics.density).toInt()
-            val padding = (sizeInDp / 4 * context.resources.displayMetrics.density).toInt()
+            val density = context.resources.displayMetrics.density
+            val sizeInPx = (sizeInDp * density).toInt()
+            val padding = (sizeInDp / 4 * density).toInt()
 
             val gestureButton = ImageView(context.applicationContext).apply {
                 layoutParams = FrameLayout.LayoutParams(sizeInPx, sizeInPx)
@@ -173,7 +178,8 @@ class EngineActivity : Activity() {
                 val shape = GradientDrawable()
                 shape.shape = GradientDrawable.OVAL
                 shape.setColor(Color.argb(100, 0, 0, 0)) // Translucent black
-                shape.setStroke(1, Color.GRAY)
+                val strokeWidth = (1 * density).toInt()
+                shape.setStroke(strokeWidth, Color.DKGRAY)
                 background = shape
 
                 setOnTouchListener { view, event ->
@@ -200,7 +206,7 @@ class EngineActivity : Activity() {
                     ActivityInfo.SCREEN_ORIENTATION_LOCKED
                 }
             params.gravity = Gravity.END or Gravity.CENTER_VERTICAL
-            params.x = (16 * context.resources.displayMetrics.density).toInt()
+            params.x = (16 * density).toInt()
             params.y = 0
 
             windowManagerSvc.addView(gestureButton, params)
