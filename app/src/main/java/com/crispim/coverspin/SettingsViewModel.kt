@@ -2,7 +2,6 @@ package com.crispim.coverspin
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.view.Display
 import androidx.lifecycle.AndroidViewModel
@@ -98,6 +97,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _uiState.update { it.copy(isEngineRunning = EngineActivity.isOverlayActive) }
         } catch (e: Exception) {
             toastHelper.show("onStartEngine error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun onStopEngine() {
+        try {
+            toastHelper.show("Stopping...", LogLevel.Debug)
+            EngineActivity.removeOverlay()
+            _uiState.update { it.copy(isEngineRunning = EngineActivity.isOverlayActive) }
+        } catch (e: Exception) {
+            toastHelper.show("onStopEngine error: ${e.message}", LogLevel.Error)
         }
     }
 }

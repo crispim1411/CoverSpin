@@ -28,12 +28,12 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.crispim.coverspin.Constants
 import com.crispim.coverspin.SettingsViewModel
 import com.crispim.coverspin.models.LogLevel
 
 class MainActivity : ComponentActivity() {
+
     private val viewModel: SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,8 +71,9 @@ class MainActivity : ComponentActivity() {
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var showStopDialog by remember { mutableStateOf(false) }
 
-    DisposableEffect(LocalLifecycleOwner.current) {
+    DisposableEffect(context as LifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.onResume()
@@ -82,6 +83,31 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         onDispose {
             (context as LifecycleOwner).lifecycle.removeObserver(observer)
         }
+    }
+
+    if (showStopDialog) {
+        AlertDialog(
+            onDismissRequest = { showStopDialog = false },
+            title = { Text("Stop Service?") },
+            text = { Text("Do you want to stop the service?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onStopEngine()
+                        showStopDialog = false
+                    }
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showStopDialog = false }
+                ) {
+                    Text("No")
+                }
+            }
+        )
     }
 
     Column(
@@ -196,7 +222,13 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 SettingDivider()
 
                 Button(
-                    onClick = { viewModel.onStartEngine() },
+                    onClick = {
+                        if (uiState.isEngineRunning) {
+                            showStopDialog = true
+                        } else {
+                            viewModel.onStartEngine()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

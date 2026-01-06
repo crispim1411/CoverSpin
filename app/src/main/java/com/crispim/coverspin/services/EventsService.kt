@@ -33,9 +33,13 @@ class EventsService : AccessibilityService() {
         screenStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
                 if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
-                    if (!EngineActivity.isOverlayActive)
-                        EngineActivity.initialize(context!!)
-                    loadRotation()
+                    try {
+                        if (!EngineActivity.isOverlayActive)
+                            EngineActivity.initialize(context!!)
+                    } catch (e: Exception) {
+                        EngineActivity.removeOverlay()
+                        toastHelper.show("loadRotation Error: ${e.message}", LogLevel.Debug)
+                    }
                 }
             }
         }
@@ -54,19 +58,5 @@ class EventsService : AccessibilityService() {
             toastHelper.show( "onDestroy Error: ${e.message}", LogLevel.Error)
         }
         super.onDestroy()
-    }
-
-    private fun loadRotation() {
-        try {
-            val shouldRotate = loadUserPrefRotation()
-            if (!setRotationEnabled(shouldRotate)) {
-                toastHelper.show("Error set rotation", LogLevel.Debug)
-                setNewUserPrefRotation(true)
-            } else {
-                toastHelper.show("Loaded $shouldRotate", LogLevel.Debug)
-            }
-        } catch (e: Exception) {
-            toastHelper.show("loadRotation Error: ${e.message}", LogLevel.Error)
-        }
     }
 }

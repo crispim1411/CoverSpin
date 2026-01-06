@@ -106,7 +106,7 @@ class EngineActivity : Activity() {
                         params.screenOrientation = newOrientation
                         windowManagerSvc.updateViewLayout(view, params)
                     }
-                } ?: return false
+                }
 
                 setNewUserPrefRotation(enabled)
                 updateGestureButtonIcon(enabled)
@@ -114,6 +114,13 @@ class EngineActivity : Activity() {
             } catch (_: Exception) {
                 return false
             }
+        }
+
+        fun removeOverlay() {
+            overlayView?.let {
+                windowManagerSvc.removeView(it)
+            }
+            overlayViewRef = null
         }
 
         fun setGestureButtonEnabled(context: Context, isEnabled: Boolean) {
