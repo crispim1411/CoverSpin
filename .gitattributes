@@ -1,0 +1,2 @@
+app/build/outputs/apk/debug/app-debug.apk filter=lfs diff=lfs merge=lfs -text
+app/Backup[[:space:]]50[[:space:]]Coverspin/CoverSpin50.apk filter=lfs diff=lfs merge=lfs -text
