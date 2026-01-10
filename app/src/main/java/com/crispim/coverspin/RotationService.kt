@@ -7,10 +7,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.IBinder
+import com.crispim.coverspin.services.ToastHelper
 
 class RotationService : Service() {
 
     private var unlockReceiver: BroadcastReceiver? = null
+    private lateinit var toastHelper: ToastHelper
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -18,7 +20,7 @@ class RotationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        launchEngine(this)
+        toastHelper = ToastHelper(application)
         registerUnlockReceiver()
     }
 
@@ -31,8 +33,13 @@ class RotationService : Service() {
     private fun registerUnlockReceiver() {
         unlockReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
-                    launchEngine(context)
+                try {
+                    if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
+                        launchEngine(context)
+                        toastHelper.show("screen on!")
+                    }
+                } catch (e: Exception) {
+                    toastHelper.show("unlock error: ")
                 }
             }
         }
@@ -41,6 +48,7 @@ class RotationService : Service() {
             addAction(Intent.ACTION_SCREEN_ON)
         }
         registerReceiver(unlockReceiver, filter)
+        toastHelper.show("events service started!")
     }
 
     private fun launchEngine(context: Context) {

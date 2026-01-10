@@ -2,15 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissões Essenciais -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
         tools:ignore="ForegroundServicesPolicy" />
-    <!-- Necessário para Android 14+ -->
+    <!-- Remover specialUse -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- Necessário para desenhar o pixel de rotação -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- Necessário para acordar a tela -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -22,14 +19,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NavigationSample">
 
-        <!-- Metadados Samsung (Cover Screen) -->
         <meta-data
             android:name="com.samsung.android.icon_on_cover_screen"
             android:value="true" />
 
-        <!-- MainActivity: Apenas verifica permissão e chama a Engine -->
+        <!-- remover atributos não usados -->
         <activity
-            android:name="com.crispim.coverspin.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.TransparentActivity"
             android:excludeFromRecents="true"
@@ -42,28 +38,36 @@
 
         <!-- EngineActivity: Desbloqueia a tela e morre -->
         <activity
-            android:name="com.crispim.coverspin.EngineActivity"
+            android:name=".EngineActivity"
             android:theme="@style/Theme.TransparentActivity"
-            android:taskAffinity="com.example.navigationsample.engine"
+            android:taskAffinity=".engine"
+            android:launchMode="singleInstance"
             android:excludeFromRecents="true"
-            android:showOnLockScreen="true"
-            android:showWhenLocked="true"
             android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize|keyboardHidden"
             android:noHistory="false" />
 
-        <!-- RotationService: Onde a mágica acontece (Overlay de Sistema) -->
         <service
             android:name="com.crispim.coverspin.RotationService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="specialUse"
             tools:ignore="ForegroundServiceType" >
 
-            <!-- OBRIGATÓRIO NO ANDROID 14+: Justificativa para specialUse -->
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="@string/fgs_rotation_reason" />
         </service>
+
+        <!-- Adicionar bootreceiver -->
 
     </application>
 
