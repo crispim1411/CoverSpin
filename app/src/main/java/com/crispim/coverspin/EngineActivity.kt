@@ -1,16 +1,47 @@
 package com.crispim.coverspin
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.PixelFormat
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import java.lang.ref.WeakReference
 
 class EngineActivity : Activity() {
 
-    private var overlayView: View? = null
+    companion object {
+        @SuppressLint("StaticFieldLeak")
+        private var overlayViewRef: WeakReference<View>? = null
+
+        val isOverlayActive: Boolean
+            get() = overlayViewRef?.get() != null
+
+        fun removeRotationOverlay(context: Context) {
+            val view = overlayViewRef?.get()
+            if (view != null) {
+                val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
+                try {
+                    windowManager.removeView(view)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    overlayViewRef = null
+                }
+            }
+        }
+
+        fun initialize(context: Context) {
+            val startIntent = Intent(context, EngineActivity::class.java)
+            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            context.startActivity(startIntent)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,59 +51,34 @@ class EngineActivity : Activity() {
             finish()
             return
         }
+        if (!isOverlayActive) {
+            addRotationOverlay()
+        }
 
-        addRotationOverlay()
         moveTaskToBack(true)
+        finish()
+        overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
     }
 
     private fun addRotationOverlay() {
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        // Criação da View Invisível
-        overlayView = View(this)
+        val overlayView = View(applicationContext)
 
         val params = WindowManager.LayoutParams(
             0, 0,
-
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-
-            // FLAGS:
-            // NOT_FOCUSABLE: O toque passa para o app de baixo.
-            // NOT_TOUCH_MODAL: Garante que cliques fora não sejam bloqueados.
-            // WATCH_OUTSIDE_TOUCH: Monitora eventos.
-            // SHOW_WHEN_LOCKED: Aparece na capa.
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
-                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-
+                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT
         )
 
         params.gravity = Gravity.TOP or Gravity.START
-
-        // O SEGREDO: Aplicar a orientação NESTA janela flutuante
         params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
 
-        try {
-            windowManager.addView(overlayView, params)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (overlayView != null) {
-            val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-            try {
-                windowManager.removeView(overlayView)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        windowManager.addView(overlayView, params)
+        overlayViewRef = WeakReference(overlayView)
     }
 }

@@ -22,7 +22,7 @@ class ToastHelper(
     fun show(msg: String) {
         toastHandler.post {
             try {
-                val targetDisplay = displayManager.displays.firstOrNull { it.state == Display.STATE_ON }
+                val targetDisplay = displayManager.getDisplay(1)?.takeIf { it.state != Display.STATE_OFF }
                     ?: displayManager.getDisplay(0)
                     ?: return@post
 

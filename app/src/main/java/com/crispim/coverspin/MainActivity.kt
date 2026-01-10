@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
+import android.view.Display
 import androidx.core.net.toUri
 import com.crispim.coverspin.services.ToastHelper
 
@@ -20,8 +22,7 @@ class MainActivity : Activity() {
         toastHelper = ToastHelper(application)
 
         if (checkPermissions()) {
-            toastHelper.show("Initializing")
-            startEventsService()
+            toastHelper.show("Initializing on create")
             startEngine()
         } else {
             toastHelper.show("Waiting permissions")
@@ -30,19 +31,16 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        // Sempre verificamos ao voltar para o app
         if (checkPermissions()) {
-            toastHelper.show("Initializing")
-            startEventsService()
+            toastHelper.show("Initializing on resume")
             startEngine()
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (checkPermissions()) {
-            toastHelper.show("Starting")
+            toastHelper.show("Initializing on activity result")
             startEngine()
-            startEventsService()
         } else {
             finish()
         }
@@ -66,14 +64,19 @@ class MainActivity : Activity() {
     }
 
     private fun startEngine() {
-        val intent = Intent(this, EngineActivity::class.java)
-        startActivity(intent)
-        finish()
-    }
+        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val isInnerScreen = displayManager.getDisplay(1)?.state == Display.STATE_ON
+        if (!isInnerScreen) {
+            toastHelper.show("Please open this app from the Cover Screen")
+            finish()
+            return
+        }
 
-    private fun startEventsService() {
-        val serviceIntent = Intent(this, RotationService::class.java)
-        startForegroundService(serviceIntent)
+        if (!EngineActivity.isOverlayActive) {
+            EngineActivity.initialize(application)
+        }
+        finish()
+        overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
     }
 
     private fun hasAccessibilityPermission(context: Context): Boolean {

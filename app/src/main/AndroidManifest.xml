@@ -47,12 +47,10 @@
             android:noHistory="false" />
 
         <service
-            android:name="com.crispim.coverspin.RotationService"
+            android:name=".RotationService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="specialUse"
-            tools:ignore="ForegroundServiceType" >
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -61,10 +59,6 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
-
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="@string/fgs_rotation_reason" />
         </service>
 
         <!-- Adicionar bootreceiver -->
