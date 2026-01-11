@@ -20,15 +20,6 @@ class MainActivity : Activity() {
 
         if (checkPermissions()) {
             startEngine()
-        } else {
-            toastHelper.show("Missing permissions")
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (checkPermissions()) {
-            startEngine()
         }
     }
 
@@ -46,8 +37,7 @@ class MainActivity : Activity() {
         }
 
         if (!hasAccessibilityPermission(application)) {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            startActivity(intent)
+            showAccessibilityDisclosure()
             hasAccessibilityPermission = false
         }
 
@@ -89,5 +79,28 @@ class MainActivity : Activity() {
             }
         }
         return false
+    }
+
+    private fun showAccessibilityDisclosure() {
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle("Accessibility API Usage")
+        builder.setMessage(
+            "This app requires the Accessibility Service API to provide its core functionality: " +
+                    "Managing screen rotation and system events on the Cover Screen.\n\n" +
+                    "• We DO NOT collect or share any personal data.\n" +
+                    "• You can disable this at any time in settings."
+        )
+
+        builder.setPositiveButton("Accept and Enable") { _, _ ->
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            startActivity(intent)
+        }
+
+        builder.setNegativeButton("Decline") { _, _ ->
+            finish()
+        }
+
+        builder.setCancelable(false)
+        builder.show()
     }
 }
