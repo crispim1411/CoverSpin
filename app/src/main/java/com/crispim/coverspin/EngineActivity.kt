@@ -13,27 +13,12 @@ import android.view.WindowManager
 import java.lang.ref.WeakReference
 
 class EngineActivity : Activity() {
-
     companion object {
         @SuppressLint("StaticFieldLeak")
         private var overlayViewRef: WeakReference<View>? = null
 
         val isOverlayActive: Boolean
             get() = overlayViewRef?.get() != null
-
-        fun removeRotationOverlay(context: Context) {
-            val view = overlayViewRef?.get()
-            if (view != null) {
-                val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
-                try {
-                    windowManager.removeView(view)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    overlayViewRef = null
-                }
-            }
-        }
 
         fun initialize(context: Context) {
             val startIntent = Intent(context, EngineActivity::class.java)
@@ -45,17 +30,8 @@ class EngineActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // ID 0 geralmente é a tela interna principal.
-        if (display != null && display.displayId == 0) {
-            finish()
-            return
-        }
-        if (!isOverlayActive) {
+        if (!isOverlayActive)
             addRotationOverlay()
-        }
-
-        moveTaskToBack(true)
         finish()
         overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
     }

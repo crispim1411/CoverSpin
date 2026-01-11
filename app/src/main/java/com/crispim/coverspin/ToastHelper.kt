@@ -1,4 +1,4 @@
-package com.crispim.coverspin.services
+package com.crispim.coverspin
 
 import android.content.Context
 import android.graphics.Color
@@ -13,15 +13,13 @@ import android.view.Gravity
 import android.view.WindowManager
 import android.widget.TextView
 
-class ToastHelper(
-    private val context: Context,
-) {
+class ToastHelper(private val context: Context) {
     private val toastHandler = Handler(Looper.getMainLooper())
-    private val displayManager: DisplayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
     fun show(msg: String) {
         toastHandler.post {
             try {
+                val displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
                 val targetDisplay = displayManager.getDisplay(1)?.takeIf { it.state != Display.STATE_OFF }
                     ?: displayManager.getDisplay(0)
                     ?: return@post

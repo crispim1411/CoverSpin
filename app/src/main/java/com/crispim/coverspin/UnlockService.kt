@@ -1,18 +1,13 @@
 package com.crispim.coverspin
 
 import android.accessibilityservice.AccessibilityService
-import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.Configuration
-import android.os.IBinder
 import android.view.accessibility.AccessibilityEvent
-import com.crispim.coverspin.services.ToastHelper
 
-class RotationService : AccessibilityService() {
-
+class UnlockService : AccessibilityService() {
     private var unlockReceiver: BroadcastReceiver? = null
     private lateinit var toastHelper: ToastHelper
 
@@ -38,13 +33,13 @@ class RotationService : AccessibilityService() {
                     if (intent.action == Intent.ACTION_USER_PRESENT || intent.action == Intent.ACTION_SCREEN_ON) {
                         if (!EngineActivity.isOverlayActive) {
                             EngineActivity.initialize(application)
-                            toastHelper.show("Unlock start")
+                            toastHelper.show("initializing on unlock")
                         } else {
                             toastHelper.show("already running")
                         }
                     }
                 } catch (e: Exception) {
-                    toastHelper.show("unlock error: ")
+                    toastHelper.show("unlock error: ${e.message}")
                 }
             }
         }

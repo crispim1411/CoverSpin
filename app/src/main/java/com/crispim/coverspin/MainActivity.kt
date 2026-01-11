@@ -10,61 +10,52 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.view.Display
 import androidx.core.net.toUri
-import com.crispim.coverspin.services.ToastHelper
 
 class MainActivity : Activity() {
-
     private lateinit var toastHelper: ToastHelper
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         toastHelper = ToastHelper(application)
 
         if (checkPermissions()) {
-            toastHelper.show("Initializing on create")
             startEngine()
         } else {
-            toastHelper.show("Waiting permissions")
+            toastHelper.show("Missing permissions")
         }
     }
 
     override fun onResume() {
         super.onResume()
         if (checkPermissions()) {
-            toastHelper.show("Initializing on resume")
             startEngine()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (checkPermissions()) {
-            toastHelper.show("Initializing on activity result")
-            startEngine()
-        } else {
-            finish()
         }
     }
 
     private fun checkPermissions() : Boolean {
+        var hasOverlayPermission = true
+        var hasAccessibilityPermission = true
+
         if (!Settings.canDrawOverlays(this)) {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 "package:$packageName".toUri()
             )
             startActivity(intent)
-            return false
+            hasOverlayPermission = false
         }
+
         if (!hasAccessibilityPermission(application)) {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivity(intent)
-            return false
+            hasAccessibilityPermission = false
         }
-        return true
+
+        return hasOverlayPermission && hasAccessibilityPermission
     }
 
     private fun startEngine() {
-        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
         val isInnerScreen = displayManager.getDisplay(1)?.state == Display.STATE_ON
         if (!isInnerScreen) {
             toastHelper.show("Please open this app from the Cover Screen")
@@ -88,7 +79,7 @@ class MainActivity : Activity() {
         val colonSplitter = TextUtils.SimpleStringSplitter(':')
         colonSplitter.setString(enabledServices)
 
-        val componentName = ComponentName(context, RotationService::class.java)
+        val componentName = ComponentName(context, UnlockService::class.java)
         val flatName = componentName.flattenToString()
 
         while (colonSplitter.hasNext()) {
