@@ -30,8 +30,15 @@ class EngineActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (display != null && display.displayId == 0) {
+            finish()
+            return
+        }
+
         if (!isOverlayActive)
             addRotationOverlay()
+
         finish()
         overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
     }
