@@ -1,6 +1,7 @@
 package com.crispim.coverspin
 
 import android.accessibilityservice.AccessibilityService
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -9,11 +10,11 @@ import android.hardware.display.DisplayManager
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 
+@SuppressLint("AccessibilityPolicy")
 class UnlockService : AccessibilityService() {
     private var unlockReceiver: BroadcastReceiver? = null
     private lateinit var toastHelper: ToastHelper
     private var tries: Int = 0
-
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -42,16 +43,22 @@ class UnlockService : AccessibilityService() {
                         if (!EngineActivity.isOverlayActive) {
                             EngineActivity.initialize(application)
                             tries += 1
-                        } else if (EngineActivity.isRotationWorking) {
+                        }
+                        // a remover
+                        else if (EngineActivity.isRotationWorking) {
                             toastHelper.show("rotation working!")
                             tries = 0
-                        } else {
+                        }
+                        //
+                        else {
                             toastHelper.show("rotate the device")
                             tries = 0
                         }
 
-                        if (tries >= 3)
+                        if (tries >= 2) {
                             toastHelper.show("Check if your app was added to GoodLock")
+                            tries = 0
+                        }
                     }
                 } catch (e: Exception) {
                     toastHelper.show("unlock error: ${e.message}")

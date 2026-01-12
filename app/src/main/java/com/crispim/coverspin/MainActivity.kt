@@ -45,17 +45,22 @@ class MainActivity : Activity() {
     }
 
     private fun startEngine() {
+        if (EngineActivity.isOverlayActive) {
+            finish()
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+            return
+        }
+
         val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
         val isInnerScreen = displayManager.getDisplay(1)?.state == Display.STATE_ON
+
         if (!isInnerScreen) {
             toastHelper.show("Please open this app from the Cover Screen")
             finish()
             return
         }
 
-        if (!EngineActivity.isOverlayActive) {
-            EngineActivity.initialize(application)
-        }
+        EngineActivity.initialize(application)
         finish()
         overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
     }

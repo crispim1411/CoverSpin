@@ -1,6 +1,8 @@
 package com.crispim.coverspin
 
+//noinspection SuspiciousImport
 import android.R
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -90,6 +92,7 @@ class EngineActivity : Activity() {
     }
 
     // region gesture button
+    @SuppressLint("ClickableViewAccessibility")
     private fun addGestureOverlay(context: Context, enabled: Boolean) {
         if (gestureOverlayViewRef != null) return
         val sizeInDp = 32
@@ -148,7 +151,7 @@ class EngineActivity : Activity() {
             rotationEnabled
         )
         hideButtonRunnable = Runnable { removeGestureOverlay() }
-        hideButtonHandler.postDelayed(Companion.hideButtonRunnable!!, 2000)
+        hideButtonHandler.postDelayed(hideButtonRunnable!!, 2000)
     }
 
     private fun removeGestureOverlay() {
