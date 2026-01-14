@@ -43,15 +43,7 @@ class UnlockService : AccessibilityService() {
                         if (!EngineActivity.isOverlayActive) {
                             EngineActivity.initialize(application)
                             tries += 1
-                        }
-                        // a remover
-                        else if (EngineActivity.isRotationWorking) {
-                            toastHelper.show("rotation working!")
-                            tries = 0
-                        }
-                        //
-                        else {
-                            toastHelper.show("rotate the device")
+                        } else {
                             tries = 0
                         }
 

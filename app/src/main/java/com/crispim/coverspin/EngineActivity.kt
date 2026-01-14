@@ -195,6 +195,7 @@ class EngineActivity : Activity() {
                     windowManager.updateViewLayout(view, params)
                 }
             }
+            updateGestureButtonIcon(rotationEnabled)
         }
     }
 
