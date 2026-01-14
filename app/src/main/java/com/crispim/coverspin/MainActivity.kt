@@ -46,6 +46,7 @@ class MainActivity : Activity() {
 
     private fun startEngine() {
         if (EngineActivity.isOverlayActive) {
+            toastHelper.show("Already running")
             finish()
             overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
             return
