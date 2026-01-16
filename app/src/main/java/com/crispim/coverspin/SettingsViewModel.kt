@@ -13,8 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import com.crispim.coverspin.models.LogLevel
-import com.crispim.coverspin.models.SettingsState
+import com.crispim.coverspin.models.*
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -50,7 +49,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     ),
                     isGestureButtonEnabled = cacheHelper.isGestureButtonEnabled(),
                     keepScreenOn = cacheHelper.isKeepScreenOn(),
-                    logLevel = cacheHelper.getLogLevel()
+                    logLevel = cacheHelper.getLogLevel(),
+                    rotationMode = RotationMode.fromInt(cacheHelper.getRotationMode()),
+                    animationType = cacheHelper.getAnimationType(),
+                    animationDuration = cacheHelper.getAnimationDuration(),
+                    gesturesEnabled = cacheHelper.isGesturesEnabled(),
+                    hapticFeedbackEnabled = cacheHelper.isHapticFeedbackEnabled(),
+                    autoStartOnBoot = cacheHelper.isAutoStartOnBoot(),
+                    batteryOptimizationDisabled = cacheHelper.isBatteryOptimizationDisabled()
                 )
             }
         } catch (e: Exception) {
@@ -107,6 +113,73 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _uiState.update { it.copy(isEngineRunning = EngineActivity.isOverlayActive) }
         } catch (e: Exception) {
             toastHelper.show("onStopEngine error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun setRotationMode(mode: RotationMode) {
+        try {
+            cacheHelper.setRotationMode(mode.value)
+            _uiState.update { it.copy(rotationMode = mode) }
+            // Apply rotation if engine is running
+            if (EngineActivity.isOverlayActive) {
+                EngineActivity.setRotationEnabled(mode != RotationMode.LOCKED)
+            }
+        } catch (e: Exception) {
+            toastHelper.show("setRotationMode error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun setAnimationType(type: AnimationType) {
+        try {
+            cacheHelper.setAnimationType(type)
+            _uiState.update { it.copy(animationType = type) }
+        } catch (e: Exception) {
+            toastHelper.show("setAnimationType error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun setAnimationDuration(duration: Int) {
+        try {
+            cacheHelper.setAnimationDuration(duration)
+            _uiState.update { it.copy(animationDuration = duration) }
+        } catch (e: Exception) {
+            toastHelper.show("setAnimationDuration error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun setGesturesEnabled(enabled: Boolean) {
+        try {
+            cacheHelper.setGesturesEnabled(enabled)
+            _uiState.update { it.copy(gesturesEnabled = enabled) }
+        } catch (e: Exception) {
+            toastHelper.show("setGesturesEnabled error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun setHapticFeedbackEnabled(enabled: Boolean) {
+        try {
+            cacheHelper.setHapticFeedbackEnabled(enabled)
+            _uiState.update { it.copy(hapticFeedbackEnabled = enabled) }
+        } catch (e: Exception) {
+            toastHelper.show("setHapticFeedbackEnabled error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun setAutoStartOnBoot(enabled: Boolean) {
+        try {
+            cacheHelper.setAutoStartOnBoot(enabled)
+            _uiState.update { it.copy(autoStartOnBoot = enabled) }
+        } catch (e: Exception) {
+            toastHelper.show("setAutoStartOnBoot error: ${e.message}", LogLevel.Error)
+        }
+    }
+
+    fun setBatteryOptimizationDisabled(disabled: Boolean) {
+        try {
+            cacheHelper.setBatteryOptimizationDisabled(disabled)
+            _uiState.update { it.copy(batteryOptimizationDisabled = disabled) }
+        } catch (e: Exception) {
+            toastHelper.show("setBatteryOptimizationDisabled error: ${e.message}", LogLevel.Error)
         }
     }
 }

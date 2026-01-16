@@ -1,6 +1,10 @@
 package com.crispim.coverspin.models
 
-enum class LogLevel(val value: Int, val displayName: String) {
+interface DisplayName {
+    val displayName: String
+}
+
+enum class LogLevel(val value: Int, override val displayName: String) : DisplayName {
     Error(0, "Error"),
     Info(1, "Info"),
     Debug(2, "Debug");

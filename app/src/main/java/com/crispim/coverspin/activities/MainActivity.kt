@@ -30,6 +30,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.crispim.coverspin.Constants
 import com.crispim.coverspin.SettingsViewModel
+import com.crispim.coverspin.models.DisplayName
 import com.crispim.coverspin.models.LogLevel
 
 class MainActivity : ComponentActivity() {
@@ -200,10 +201,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
                 SettingDivider()
 
-                SettingRowDropdown(
+                SettingRowDropdown<LogLevel>(
                     title = "Log Level",
                     subtitle = "Controls the level of on-screen messages",
-                    options = LogLevel.entries,
+                    options = LogLevel.entries.toList(),
                     selectedOption = uiState.logLevel,
                     onOptionSelected = { viewModel.onLogLevelChange(it) },
                     enabled = allPermissionsGranted
@@ -273,14 +274,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 }
 
 @Composable
-fun SettingRowDropdown(
+fun <T> SettingRowDropdown(
     title: String,
     subtitle: String,
-    options: List<LogLevel>,
-    selectedOption: LogLevel,
-    onOptionSelected: (LogLevel) -> Unit,
+    options: List<T>,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit,
     enabled: Boolean = true
-) {
+) where T : DisplayName {
     var expanded by remember { mutableStateOf(false) }
 
     Row(
@@ -308,7 +309,7 @@ fun SettingRowDropdown(
                 enabled = enabled,
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(text = selectedOption.displayName)
+                Text(selectedOption.displayName)
                 Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown arrow")
             }
 
