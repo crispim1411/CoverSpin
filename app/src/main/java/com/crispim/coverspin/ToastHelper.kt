@@ -1,4 +1,4 @@
-package com.crispim.coverspin.services
+package com.crispim.coverspin
 
 import android.content.Context
 import android.graphics.Color
@@ -8,27 +8,21 @@ import android.hardware.display.DisplayManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Display
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.TextView
-import com.crispim.coverspin.Constants
-import com.crispim.coverspin.models.LogLevel
 
-class ToastHelper(
-    private val context: Context,
-    private val cacheHelper: CacheHelper
-) {
+class ToastHelper(private val context: Context) {
     private val toastHandler = Handler(Looper.getMainLooper())
-    private val displayManager: DisplayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
-    fun show(msg: String, level: LogLevel) {
-        val currentLogLevel = cacheHelper.getLogLevel()
-        if (level.value > currentLogLevel.value)
-            return
-
+    fun show(msg: String) {
         toastHandler.post {
             try {
-                val targetDisplay = displayManager.getDisplay(1) ?: displayManager.getDisplay(0) ?: return@post
+                val displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+                val targetDisplay = displayManager.getDisplay(1)?.takeIf { it.state != Display.STATE_OFF }
+                    ?: displayManager.getDisplay(0)
+                    ?: return@post
 
                 val displayContext = context.createDisplayContext(targetDisplay)
                 val wm = displayContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -42,7 +36,9 @@ class ToastHelper(
                     PixelFormat.TRANSLUCENT
                 )
                 params.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                params.y = 100
+
+                val displayHeight = displayContext.resources.displayMetrics.heightPixels
+                params.y = displayHeight/4
 
                 val textView = TextView(displayContext).apply {
                     text = msg
@@ -59,7 +55,7 @@ class ToastHelper(
 
                 toastHandler.postDelayed({
                     try { wm.removeView(textView) } catch (_: Exception) {}
-                }, Constants.SHOWING_TOAST_MS.toLong())
+                }, 5000)
             } catch (e: Exception) {
                 Log.e("showToast", "Failed to show toast: ${e.message}")
             }
