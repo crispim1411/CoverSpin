@@ -14,6 +14,7 @@ import android.view.accessibility.AccessibilityEvent
 class UnlockService : AccessibilityService() {
     private var unlockReceiver: BroadcastReceiver? = null
     private lateinit var toastHelper: ToastHelper
+    private var isFirstAlert: Boolean = true
     private var tries: Int = 0
 
     override fun onServiceConnected() {
@@ -36,19 +37,23 @@ class UnlockService : AccessibilityService() {
             override fun onReceive(context: Context, intent: Intent) {
                 try {
                     val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
-                    if(displayManager.getDisplay(1)?.state != Display.STATE_ON)
+                    if (displayManager.getDisplay(1)?.state != Display.STATE_ON)
                         return
 
-                    if (intent.action == Intent.ACTION_SCREEN_ON) {
+                    val action = intent.action
+                    if (action == Intent.ACTION_SCREEN_ON || action == Intent.ACTION_USER_PRESENT) {
                         if (!EngineActivity.isOverlayActive) {
                             EngineActivity.initialize(application)
                             tries += 1
-                        } else {
-                            tries = 0
-                        }
 
-                        if (tries >= 2) {
-                            toastHelper.show("Check if your app was added to GoodLock")
+                            if (tries >= 2) {
+                                if (isFirstAlert) {
+                                    toastHelper.show("Check if your app was added to GoodLock")
+                                    isFirstAlert = false
+                                }
+                                tries = 0
+                            }
+                        } else {
                             tries = 0
                         }
                     }
