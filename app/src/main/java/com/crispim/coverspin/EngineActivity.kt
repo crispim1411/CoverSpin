@@ -22,6 +22,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import java.lang.ref.WeakReference
+import androidx.core.content.edit
 
 class EngineActivity : Activity() {
     companion object {
@@ -54,6 +55,9 @@ class EngineActivity : Activity() {
             return
         }
 
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        rotationEnabled = prefs.getBoolean("rotation_enabled", true)
+
         orientationEventListener = createOrientationListener(applicationContext)
         if (!isOverlayActive)
             addRotationOverlay()
@@ -83,8 +87,11 @@ class EngineActivity : Activity() {
         )
 
         params.gravity = Gravity.TOP or Gravity.START
-        params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-        rotationEnabled = true
+        params.screenOrientation = if (rotationEnabled) {
+            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_LOCKED
+        }
 
         windowManager.addView(overlayView, params)
         overlayViewRef = WeakReference(overlayView)
@@ -175,7 +182,11 @@ class EngineActivity : Activity() {
             initialize(applicationContext)
         else {
             val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+
             rotationEnabled = !rotationEnabled
+            val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+            prefs.edit { putBoolean("rotation_enabled", rotationEnabled) }
+
             val newOrientation = if (rotationEnabled) {
                 ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
             } else {
