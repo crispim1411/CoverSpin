@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun SettingsScreen() {
         val context = LocalContext.current
@@ -69,6 +70,11 @@ class MainActivity : ComponentActivity() {
         var showAccessibilityDialog by remember { mutableStateOf(false) }
         var hasAccessibility by remember { mutableStateOf(isAccessibilityServiceEnabled(context)) }
         var hasOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+
+        val prefs = remember { context.getSharedPreferences("settings", Context.MODE_PRIVATE) }
+        var rotationMode by remember { 
+            mutableStateOf(prefs.getString("rotation_mode", "AUTO") ?: "AUTO") 
+        }
 
         // Update state when app returns to foreground
         DisposableEffect(lifecycleOwner) {
@@ -146,6 +152,51 @@ class MainActivity : ComponentActivity() {
                     message = "Service is active. The menu button will appear on your cover screen.",
                     isError = false
                 )
+            }
+
+            // Mode Selection
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Gesture Button Mode",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        val modes = listOf("AUTO", "MANUAL", "OFF")
+                        modes.forEachIndexed { index, mode ->
+                            SegmentedButton(
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
+                                onClick = { 
+                                    rotationMode = mode
+                                    prefs.edit().putString("rotation_mode", mode).apply()
+                                    EngineActivity.updateMode(context, mode)
+                                },
+                                selected = rotationMode == mode
+                            ) {
+                                Text(mode.lowercase().replaceFirstChar { it.uppercase() })
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = when(rotationMode) {
+                            "OFF" -> "The gesture button is disabled."
+                            "AUTO" -> "The button toggles between auto-rotation and locked mode."
+                            else -> "The button appears when you tilt the device to suggest a rotation, similar to Android's system button."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
             }
 
             // Accessibility Permission

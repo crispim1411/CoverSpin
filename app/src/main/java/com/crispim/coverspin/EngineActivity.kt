@@ -22,7 +22,6 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import java.lang.ref.WeakReference
-import androidx.core.content.edit
 
 class EngineActivity : Activity() {
     companion object {
@@ -38,12 +37,23 @@ class EngineActivity : Activity() {
         val isOverlayActive: Boolean
             get() = overlayViewRef?.get() != null
         var isRotationWorking: Boolean = false
+        private var rotationMode: String = "AUTO"
 
         fun initialize(context: Context) {
+            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
+
             val startIntent = Intent(context, EngineActivity::class.java)
             startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
             context.startActivity(startIntent)
+        }
+
+        fun updateMode(context: Context, mode: String) {
+            rotationMode = mode
+            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            prefs.edit().putString("rotation_mode", mode).apply()
+            rotationMode = mode
         }
     }
 
@@ -54,9 +64,6 @@ class EngineActivity : Activity() {
             finish()
             return
         }
-
-        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
-        rotationEnabled = prefs.getBoolean("rotation_enabled", true)
 
         orientationEventListener = createOrientationListener(applicationContext)
         if (!isOverlayActive)
@@ -82,15 +89,20 @@ class EngineActivity : Activity() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT
         )
 
         params.gravity = Gravity.TOP or Gravity.START
-        params.screenOrientation = if (rotationEnabled) {
-            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+
+        if (rotationMode == "AUTO") {
+            params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+            rotationEnabled = true
         } else {
-            ActivityInfo.SCREEN_ORIENTATION_LOCKED
+            params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+            rotationEnabled = false
         }
 
         windowManager.addView(overlayView, params)
@@ -120,7 +132,13 @@ class EngineActivity : Activity() {
 
             setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
-                    invertRotation()
+                    val newOrientation = if (rotationMode == "AUTO") {
+                        rotationEnabled = !rotationEnabled
+                        getRotationAuto()
+                    } else {
+                        getRotationManual(true)
+                    }
+                    setRotation(newOrientation)
                     view.performClick()
                 }
                 true
@@ -171,27 +189,33 @@ class EngineActivity : Activity() {
 
     private fun updateGestureButtonIcon(isEnabled: Boolean) {
         (gestureOverlayViewRef?.get() as? ImageView)?.apply {
-            val iconRes = if (isEnabled) R.drawable.ic_popup_sync else R.drawable.ic_lock_idle_lock
+            val iconRes = if (isEnabled || rotationMode == "MANUAL")
+                R.drawable.ic_popup_sync else R.drawable.ic_lock_idle_lock
             setImageResource(iconRes)
             setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
         }
     }
 
-    private fun invertRotation() {
+    private fun getRotationManual(releaseRotation: Boolean = false) : Int {
+        return if (releaseRotation)
+            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        else
+            ActivityInfo.SCREEN_ORIENTATION_LOCKED
+    }
+
+    private fun getRotationAuto() : Int {
+        return if (rotationEnabled)
+            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        else
+            ActivityInfo.SCREEN_ORIENTATION_LOCKED
+    }
+
+    private fun setRotation(newOrientation: Int) {
         if (overlayViewRef == null)
             initialize(applicationContext)
         else {
             val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-            rotationEnabled = !rotationEnabled
-            val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
-            prefs.edit { putBoolean("rotation_enabled", rotationEnabled) }
-
-            val newOrientation = if (rotationEnabled) {
-                ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-            } else {
-                ActivityInfo.SCREEN_ORIENTATION_LOCKED
-            }
             overlayViewRef?.get()?.let { view ->
                 val params = view.layoutParams as WindowManager.LayoutParams
                 if (params.screenOrientation != newOrientation) {
@@ -226,9 +250,14 @@ class EngineActivity : Activity() {
                 }
 
                 if (currentQuadrant != lastQuadrant) {
+                    if (rotationMode == "OFF") return
+
                     lastQuadrant = currentQuadrant
                     val view = overlayViewRef?.get() ?: return
+
                     showGestureButton(view.context)
+                    if (rotationMode == "MANUAL")
+                        setRotation(getRotationManual())
                 }
                 isRotationWorking = true
             }
