@@ -75,8 +75,7 @@ class EngineActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
-        if (displayManager.getDisplay(1)?.state != Display.STATE_ON) {
+        if (display != null && display.displayId == 0) {
             finish()
             return
         }
