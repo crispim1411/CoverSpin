@@ -45,6 +45,10 @@ class EngineActivity : Activity() {
             private set
 
         fun initialize(context: Context) {
+            if (trackLogsEnabled) {
+                ToastHelper(context).show("Initializing")
+            }
+
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
             rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
             trackLogsEnabled = prefs.getBoolean("track_logs", false)
@@ -124,8 +128,7 @@ class EngineActivity : Activity() {
             overlayViewRef = WeakReference(overlayView)
             orientationEventListener.enable()
         } catch (e: Exception) {
-            if (trackLogsEnabled)
-                ToastHelper(this).show("Failed to add rotation overlay: ${e.message}")
+            ToastHelper(this).show("Failed to add rotation overlay: ${e.message}")
         }
     }
 
@@ -199,12 +202,14 @@ class EngineActivity : Activity() {
             gestureOverlayViewRef = WeakReference(gestureButton)
             updateGestureButtonIcon(enabled)
         } catch (e: Exception) {
-            if (trackLogsEnabled)
-                ToastHelper(this).show("Failed to add gesture button: ${e.message}")
+            ToastHelper(this).show("Failed to add gesture button: ${e.message}")
         }
     }
 
     private fun showGestureButton(context: Context) {
+        if (trackLogsEnabled)
+            ToastHelper(this).show("Showing gesture button")
+
         hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
         addGestureOverlay(
             context,
@@ -249,23 +254,29 @@ class EngineActivity : Activity() {
         if (overlayViewRef == null)
             initialize(applicationContext)
         else {
-            val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            try {
+                if (trackLogsEnabled)
+                    ToastHelper(this).show("Setting rotation to $newOrientation")
+                val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-            overlayViewRef?.get()?.let { view ->
-                val params = view.layoutParams as WindowManager.LayoutParams
-                if (params.screenOrientation != newOrientation) {
-                    params.screenOrientation = newOrientation
-                    windowManager.updateViewLayout(view, params)
+                overlayViewRef?.get()?.let { view ->
+                    val params = view.layoutParams as WindowManager.LayoutParams
+                    if (params.screenOrientation != newOrientation) {
+                        params.screenOrientation = newOrientation
+                        windowManager.updateViewLayout(view, params)
+                    }
                 }
-            }
-            gestureOverlayViewRef?.get()?.let { view ->
-                val params = view.layoutParams as WindowManager.LayoutParams
-                if (params.screenOrientation != newOrientation) {
-                    params.screenOrientation = newOrientation
-                    windowManager.updateViewLayout(view, params)
+                gestureOverlayViewRef?.get()?.let { view ->
+                    val params = view.layoutParams as WindowManager.LayoutParams
+                    if (params.screenOrientation != newOrientation) {
+                        params.screenOrientation = newOrientation
+                        windowManager.updateViewLayout(view, params)
+                    }
                 }
+                updateGestureButtonIcon(rotationEnabled)
+            } catch (e: Exception) {
+                ToastHelper(this).show("Failed to set rotation: ${e.message}")
             }
-            updateGestureButtonIcon(rotationEnabled)
         }
     }
 

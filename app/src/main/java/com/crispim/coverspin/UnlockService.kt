@@ -58,9 +58,7 @@ class UnlockService : AccessibilityService() {
                         }
                     }
                 } catch (e: Exception) {
-                    if (EngineActivity.trackLogsEnabled) {
-                        toastHelper.show("unlock error: ${e.message}")
-                    }
+                    toastHelper.show("unlock error: ${e.message}")
                 }
             }
         }
