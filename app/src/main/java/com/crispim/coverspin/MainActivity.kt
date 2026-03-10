@@ -75,6 +75,9 @@ class MainActivity : ComponentActivity() {
         var rotationMode by remember { 
             mutableStateOf(prefs.getString("rotation_mode", "AUTO") ?: "AUTO") 
         }
+        var trackLogsEnabled by remember {
+            mutableStateOf(prefs.getBoolean("track_logs", false))
+        }
 
         // Update state when app returns to foreground
         DisposableEffect(lifecycleOwner) {
@@ -199,6 +202,42 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // Track Logs Control
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Track Logs",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Enable debug toasts for error tracking.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+                    Switch(
+                        checked = trackLogsEnabled,
+                        onCheckedChange = { enabled ->
+                            trackLogsEnabled = enabled
+                            EngineActivity.updateTrackLogs(context, enabled)
+                        }
+                    )
+                }
+            }
+
             // Accessibility Permission
             PermissionItem(
                 title = "Accessibility Service",
@@ -235,7 +274,7 @@ class MainActivity : ComponentActivity() {
                 Text(text = "Buy me an Ice Cream ($1)")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(30.dp))
         }
     }
 

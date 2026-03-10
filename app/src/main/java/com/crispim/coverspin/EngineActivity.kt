@@ -11,9 +11,11 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.graphics.drawable.GradientDrawable
+import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Display
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.OrientationEventListener
@@ -22,6 +24,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import java.lang.ref.WeakReference
+import androidx.core.content.edit
 
 class EngineActivity : Activity() {
     companion object {
@@ -38,10 +41,13 @@ class EngineActivity : Activity() {
             get() = overlayViewRef?.get() != null
         var isRotationWorking: Boolean = false
         private var rotationMode: String = "AUTO"
+        var trackLogsEnabled: Boolean = false
+            private set
 
         fun initialize(context: Context) {
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
             rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
+            trackLogsEnabled = prefs.getBoolean("track_logs", false)
 
             val startIntent = Intent(context, EngineActivity::class.java)
             startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -52,22 +58,31 @@ class EngineActivity : Activity() {
         fun updateMode(context: Context, mode: String) {
             rotationMode = mode
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-            prefs.edit().putString("rotation_mode", mode).apply()
-            rotationMode = mode
+            prefs.edit { putString("rotation_mode", mode) }
+        }
+
+        fun updateTrackLogs(context: Context, enabled: Boolean) {
+            trackLogsEnabled = enabled
+            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            prefs.edit { putBoolean("track_logs", enabled) }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (display != null && display.displayId == 0) {
+        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
+        if (displayManager.getDisplay(1)?.state != Display.STATE_ON) {
             finish()
             return
         }
 
         orientationEventListener = createOrientationListener(applicationContext)
-        if (!isOverlayActive)
+        if (!isOverlayActive) {
+            if (trackLogsEnabled)
+                ToastHelper(this).show("Adding rotation overlay")
             addRotationOverlay()
+        }
 
         finish()
         overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
@@ -89,7 +104,6 @@ class EngineActivity : Activity() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT
         )
@@ -105,9 +119,14 @@ class EngineActivity : Activity() {
             rotationEnabled = false
         }
 
-        windowManager.addView(overlayView, params)
-        overlayViewRef = WeakReference(overlayView)
-        orientationEventListener.enable()
+        try {
+            windowManager.addView(overlayView, params)
+            overlayViewRef = WeakReference(overlayView)
+            orientationEventListener.enable()
+        } catch (e: Exception) {
+            if (trackLogsEnabled)
+                ToastHelper(this).show("Failed to add rotation overlay: ${e.message}")
+        }
     }
 
     // region gesture button
@@ -163,10 +182,26 @@ class EngineActivity : Activity() {
         params.x = (16 * density).toInt()
         params.y = 0
 
-        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        windowManager.addView(gestureButton, params)
-        gestureOverlayViewRef = WeakReference(gestureButton)
-        updateGestureButtonIcon(enabled)
+        if (rotationMode == "MANUAL") {
+            params.gravity = Gravity.BOTTOM or Gravity.END
+            val margin = (10 * density).toInt()
+            params.x = margin
+            params.y = margin
+        } else {
+            params.gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            params.x = (16 * density).toInt()
+            params.y = 0
+        }
+
+        try {
+            val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            windowManager.addView(gestureButton, params)
+            gestureOverlayViewRef = WeakReference(gestureButton)
+            updateGestureButtonIcon(enabled)
+        } catch (e: Exception) {
+            if (trackLogsEnabled)
+                ToastHelper(this).show("Failed to add gesture button: ${e.message}")
+        }
     }
 
     private fun showGestureButton(context: Context) {
