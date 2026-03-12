@@ -76,22 +76,16 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?): Boolean {
         return when (intent?.action) {
-            "com.crispim.coverspin.ACTION_SET_MODE_AUTO" -> {
-                updateAppMode("AUTO")
+            "com.crispim.coverspin.ACTION_ENABLE_ROTATION" -> {
+                EngineActivity.routineSetRotation(this, true)
                 true
             }
-            "com.crispim.coverspin.ACTION_SET_MODE_OFF" -> {
-                updateAppMode("OFF")
+            "com.crispim.coverspin.ACTION_DISABLE_ROTATION" -> {
+                EngineActivity.routineSetRotation(this, false)
                 true
             }
             else -> false
         }
-    }
-
-    private fun updateAppMode(mode: String) {
-        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
-        prefs.edit { putString("rotation_mode", mode) }
-        EngineActivity.updateMode(this, mode)
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -212,7 +206,7 @@ class MainActivity : ComponentActivity() {
                                 shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
                                 onClick = { 
                                     rotationMode = mode
-                                    updateAppMode(mode)
+                                    EngineActivity.updateMode(applicationContext, mode)
                                 },
                                 selected = rotationMode == mode
                             ) {

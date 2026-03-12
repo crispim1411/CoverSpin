@@ -11,11 +11,9 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.graphics.drawable.GradientDrawable
-import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.Display
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.OrientationEventListener
@@ -66,6 +64,30 @@ class EngineActivity : Activity() {
 
             if (overlayViewRef == null)
                 initialize(context)
+        }
+
+        fun routineSetRotation(context: Context, enabled: Boolean) {
+            rotationEnabled = enabled
+            overlayViewRef?.get()?.let { view ->
+                try {
+                    val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
+                    val params = view.layoutParams as WindowManager.LayoutParams
+
+                    params.screenOrientation = if (enabled) {
+                        ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                    } else {
+                        ActivityInfo.SCREEN_ORIENTATION_LOCKED
+                    }
+
+                    windowManager.updateViewLayout(view, params)
+
+                    if (enabled) orientationEventListener.enable()
+                    else orientationEventListener.disable()
+
+                } catch (e: Exception) {
+                    ToastHelper(context).show("Failed to update rotation mode: ${e.message}")
+                }
+            }
         }
 
         fun updateTrackLogs(context: Context, enabled: Boolean) {

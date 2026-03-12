@@ -7,7 +7,7 @@
         android:shortcutShortLabel="@string/shortcut_enable_auto_label"
         android:shortcutLongLabel="@string/shortcut_enable_auto_label">
         <intent
-            android:action="com.crispim.coverspin.ACTION_SET_MODE_AUTO"
+            android:action="com.crispim.coverspin.ACTION_ENABLE_ROTATION"
             android:targetPackage="com.crispim.coverspin"
             android:targetClass="com.crispim.coverspin.MainActivity" />
     </shortcut>
@@ -18,7 +18,7 @@
         android:shortcutShortLabel="@string/shortcut_disable_label"
         android:shortcutLongLabel="@string/shortcut_disable_label">
         <intent
-            android:action="com.crispim.coverspin.ACTION_SET_MODE_OFF"
+            android:action="com.crispim.coverspin.ACTION_DISABLE_ROTATION"
             android:targetPackage="com.crispim.coverspin"
             android:targetClass="com.crispim.coverspin.MainActivity" />
     </shortcut>
