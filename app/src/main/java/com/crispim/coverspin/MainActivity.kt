@@ -29,10 +29,16 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        if (handleIntent(intent)) {
+            finish()
+            return
+        }
 
         val primaryColor = Color(0xFF0D47A1)
         val secondaryColor = Color(0xFF90CAF9)
@@ -59,6 +65,33 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (handleIntent(intent)) {
+            finish()
+        }
+    }
+
+    private fun handleIntent(intent: Intent?): Boolean {
+        return when (intent?.action) {
+            "com.crispim.coverspin.ACTION_SET_MODE_AUTO" -> {
+                updateAppMode("AUTO")
+                true
+            }
+            "com.crispim.coverspin.ACTION_SET_MODE_OFF" -> {
+                updateAppMode("OFF")
+                true
+            }
+            else -> false
+        }
+    }
+
+    private fun updateAppMode(mode: String) {
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        prefs.edit { putString("rotation_mode", mode) }
+        EngineActivity.updateMode(this, mode)
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -179,8 +212,7 @@ class MainActivity : ComponentActivity() {
                                 shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
                                 onClick = { 
                                     rotationMode = mode
-                                    prefs.edit().putString("rotation_mode", mode).apply()
-                                    EngineActivity.updateMode(context, mode)
+                                    updateAppMode(mode)
                                 },
                                 selected = rotationMode == mode
                             ) {

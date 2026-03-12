@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="enable_auto"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_popup_sync"
+        android:shortcutShortLabel="@string/shortcut_enable_auto_label"
+        android:shortcutLongLabel="@string/shortcut_enable_auto_label">
+        <intent
+            android:action="com.crispim.coverspin.ACTION_SET_MODE_AUTO"
+            android:targetPackage="com.crispim.coverspin"
+            android:targetClass="com.crispim.coverspin.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="disable_all"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_lock_idle_lock"
+        android:shortcutShortLabel="@string/shortcut_disable_label"
+        android:shortcutLongLabel="@string/shortcut_disable_label">
+        <intent
+            android:action="com.crispim.coverspin.ACTION_SET_MODE_OFF"
+            android:targetPackage="com.crispim.coverspin"
+            android:targetClass="com.crispim.coverspin.MainActivity" />
+    </shortcut>
+</shortcuts>

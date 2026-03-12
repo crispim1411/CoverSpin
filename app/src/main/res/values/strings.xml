@@ -2,4 +2,6 @@
     <string name="app_name">CoverSpin</string>
     <string name="fgs_rotation_reason">Overlay for rotation control on foldable screens</string>
     <string name="accessibility_service_description">CoverSpin needs this service to keep rotation active and perform gestures on the cover screen.</string>
+    <string name="shortcut_enable_auto_label">Enable Auto Rotation</string>
+    <string name="shortcut_disable_label">Disable Button</string>
 </resources>

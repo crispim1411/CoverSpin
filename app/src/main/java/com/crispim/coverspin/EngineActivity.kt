@@ -49,7 +49,7 @@ class EngineActivity : Activity() {
                 ToastHelper(context).show("Initializing")
             }
 
-            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
             rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
             trackLogsEnabled = prefs.getBoolean("track_logs", false)
 
@@ -61,13 +61,16 @@ class EngineActivity : Activity() {
 
         fun updateMode(context: Context, mode: String) {
             rotationMode = mode
-            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
             prefs.edit { putString("rotation_mode", mode) }
+
+            if (overlayViewRef == null)
+                initialize(context)
         }
 
         fun updateTrackLogs(context: Context, enabled: Boolean) {
             trackLogsEnabled = enabled
-            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
             prefs.edit { putBoolean("track_logs", enabled) }
         }
     }
@@ -185,7 +188,7 @@ class EngineActivity : Activity() {
         params.y = 0
 
         if (rotationMode == "MANUAL") {
-            params.gravity = Gravity.BOTTOM or Gravity.END
+            params.gravity = Gravity.BOTTOM or Gravity.START
             val margin = (10 * density).toInt()
             params.x = margin
             params.y = margin
