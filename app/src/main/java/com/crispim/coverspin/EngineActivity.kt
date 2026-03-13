@@ -34,7 +34,7 @@ class EngineActivity : Activity() {
         private var hideButtonRunnable: Runnable? = null
         private lateinit var orientationEventListener: OrientationEventListener
 
-        private var rotationEnabled: Boolean = false
+        private var rotationEnabled: Boolean = true
         val isOverlayActive: Boolean
             get() = overlayViewRef?.get() != null
         var isRotationWorking: Boolean = false
@@ -43,18 +43,22 @@ class EngineActivity : Activity() {
             private set
 
         fun initialize(context: Context) {
-            if (trackLogsEnabled) {
-                ToastHelper(context).show("Initializing")
+            try {
+                if (trackLogsEnabled) {
+                    ToastHelper(context).show("Initializing")
+                }
+
+                val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
+                rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
+                trackLogsEnabled = prefs.getBoolean("track_logs", false)
+
+                val startIntent = Intent(context, EngineActivity::class.java)
+                startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                context.startActivity(startIntent)
+            } catch (e: Exception) {
+                ToastHelper(context).show("Failed to initialize: ${e.message}")
             }
-
-            val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
-            rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
-            trackLogsEnabled = prefs.getBoolean("track_logs", false)
-
-            val startIntent = Intent(context, EngineActivity::class.java)
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-            context.startActivity(startIntent)
         }
 
         fun updateMode(context: Context, mode: String) {
@@ -68,6 +72,10 @@ class EngineActivity : Activity() {
 
         fun routineSetRotation(context: Context, enabled: Boolean) {
             rotationEnabled = enabled
+
+            if (overlayViewRef == null)
+                initialize(context)
+
             overlayViewRef?.get()?.let { view ->
                 try {
                     val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
