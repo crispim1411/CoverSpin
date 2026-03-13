@@ -59,6 +59,9 @@ dependencies {
     
     // Add extended icons dependency
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Coil for image loading
+    implementation(libs.coil.compose)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
