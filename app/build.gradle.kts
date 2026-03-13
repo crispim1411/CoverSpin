@@ -6,13 +6,11 @@ plugins {
 
 android {
     namespace = "com.crispim.coverspin"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.crispim.coverspin"
-        minSdk = 36
+        minSdk = 34
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
