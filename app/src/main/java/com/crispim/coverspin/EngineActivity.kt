@@ -14,6 +14,8 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.OrientationEventListener
@@ -193,6 +195,7 @@ class EngineActivity : Activity() {
                         getRotationManual(true)
                     }
                     setRotation(newOrientation)
+                    vibrate()
                     view.performClick()
                 }
                 true
@@ -235,6 +238,14 @@ class EngineActivity : Activity() {
             updateGestureButtonIcon(enabled)
         } catch (e: Exception) {
             ToastHelper(this).show("Failed to add gesture button: ${e.message}")
+        }
+    }
+
+    private fun vibrate() {
+        getSystemService(Vibrator::class.java)?.let {
+            if (it.hasVibrator()) {
+                it.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE))
+            }
         }
     }
 
