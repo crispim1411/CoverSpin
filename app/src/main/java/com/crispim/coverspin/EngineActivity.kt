@@ -30,17 +30,15 @@ class EngineActivity : Activity() {
     companion object {
         private var overlayViewRef: WeakReference<View>? = null
         private var gestureOverlayViewRef: WeakReference<View>? = null
-
-        // Timer for temporary gesture button
         private val hideButtonHandler = Handler(Looper.getMainLooper())
         private var hideButtonRunnable: Runnable? = null
         private lateinit var orientationEventListener: OrientationEventListener
-
         private var rotationEnabled: Boolean = true
         val isOverlayActive: Boolean
             get() = overlayViewRef?.get() != null
         var isRotationWorking: Boolean = false
         private var rotationMode: String = "AUTO"
+        private var buttonPosition: String = "CENTER_RIGHT"
         var trackLogsEnabled: Boolean = false
             private set
 
@@ -52,6 +50,7 @@ class EngineActivity : Activity() {
 
                 val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
                 rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
+                buttonPosition = prefs.getString("button_position", "CENTER_RIGHT") ?: "CENTER_RIGHT"
                 trackLogsEnabled = prefs.getBoolean("track_logs", false)
 
                 val startIntent = Intent(context, EngineActivity::class.java)
@@ -70,6 +69,12 @@ class EngineActivity : Activity() {
 
             if (overlayViewRef == null)
                 initialize(context)
+        }
+
+        fun updatePosition(context: Context, position: String) {
+            buttonPosition = position
+            val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
+            prefs.edit { putString("button_position", position) }
         }
 
         fun routineSetRotation(context: Context, enabled: Boolean) {
@@ -216,19 +221,29 @@ class EngineActivity : Activity() {
             } else {
                 ActivityInfo.SCREEN_ORIENTATION_LOCKED
             }
-        params.gravity = Gravity.END or Gravity.CENTER_VERTICAL
-        params.x = (16 * density).toInt()
-        params.y = 0
+        val margin = (16 * density).toInt()
 
-        if (rotationMode == "MANUAL") {
-            params.gravity = Gravity.BOTTOM or Gravity.START
-            val margin = (10 * density).toInt()
-            params.x = margin
-            params.y = margin
-        } else {
-            params.gravity = Gravity.END or Gravity.CENTER_VERTICAL
-            params.x = (16 * density).toInt()
-            params.y = 0
+        when (buttonPosition) {
+            "CENTER_LEFT" -> {
+                params.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+                params.x = margin
+                params.y = 0
+            }
+            "BOTTOM_RIGHT" -> {
+                params.gravity = Gravity.BOTTOM or Gravity.END
+                params.x = margin
+                params.y = margin
+            }
+            "BOTTOM_LEFT" -> {
+                params.gravity = Gravity.BOTTOM or Gravity.START
+                params.x = margin
+                params.y = margin
+            }
+            else -> { // CENTER_RIGHT
+                params.gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                params.x = margin
+                params.y = 0
+            }
         }
 
         try {

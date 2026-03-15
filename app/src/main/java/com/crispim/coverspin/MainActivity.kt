@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.RotateRight
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.PlayCircle
-import androidx.compose.material.icons.rounded.RotateRight
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,7 +98,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun SettingsScreen() {
         val context = LocalContext.current
-        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+        val lifecycleOwner = LocalLifecycleOwner.current
         
         var showAccessibilityDialog by remember { mutableStateOf(false) }
         var hasAccessibility by remember { mutableStateOf(isAccessibilityServiceEnabled(context)) }
@@ -108,6 +107,9 @@ class MainActivity : ComponentActivity() {
         val prefs = remember { context.getSharedPreferences("settings", Context.MODE_PRIVATE) }
         var rotationMode by remember { 
             mutableStateOf(prefs.getString("rotation_mode", "AUTO") ?: "AUTO") 
+        }
+        var buttonPosition by remember {
+            mutableStateOf(prefs.getString("button_position", "CENTER_RIGHT") ?: "CENTER_RIGHT")
         }
         var trackLogsEnabled by remember {
             mutableStateOf(prefs.getBoolean("track_logs", false))
@@ -210,6 +212,7 @@ class MainActivity : ComponentActivity() {
 
                 TutorialsSection()
 
+                // Gesture Button Mode Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -240,7 +243,59 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "Button Position",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
                         Spacer(modifier = Modifier.height(8.dp))
+                        
+                        var expanded by remember { mutableStateOf(false) }
+                        val positions = listOf(
+                            "CENTER_RIGHT" to "Center Right (Default)",
+                            "CENTER_LEFT" to "Center Left",
+                            "BOTTOM_RIGHT" to "Bottom Right",
+                            "BOTTOM_LEFT" to "Bottom Left"
+                        )
+                        
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OutlinedTextField(
+                                value = positions.find { it.first == buttonPosition }?.second ?: "Center Right",
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                positions.forEach { (value, label) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = {
+                                            buttonPosition = value
+                                            EngineActivity.updatePosition(context, value)
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
                         Text(
                             text = when(rotationMode) {
                                 "OFF" -> "The gesture button is disabled."
