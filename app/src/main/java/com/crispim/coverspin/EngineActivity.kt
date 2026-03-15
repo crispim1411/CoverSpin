@@ -274,7 +274,7 @@ class EngineActivity : Activity() {
             rotationEnabled
         )
         hideButtonRunnable = Runnable { removeGestureOverlay() }
-        hideButtonHandler.postDelayed(hideButtonRunnable!!, 2000)
+        hideButtonHandler.postDelayed(hideButtonRunnable!!, 3000)
     }
 
     private fun removeGestureOverlay() {
@@ -341,19 +341,21 @@ class EngineActivity : Activity() {
     private fun createOrientationListener(context: Context): OrientationEventListener {
         return object : OrientationEventListener(context) {
             private var lastQuadrant = -1
+            private val THRESHOLD = 25
 
             override fun onOrientationChanged(orientation: Int) {
                 if (display != null && display?.displayId == 0 || orientation == ORIENTATION_UNKNOWN)
                     return
 
-                val currentQuadrant = when (orientation) {
-                    in 45..134 -> 1  // Landscape
-                    in 135..224 -> 2 // Reverse Portrait
-                    in 225..314 -> 3 // Reverse Landscape
-                    else -> 0        // Portrait
+                val currentQuadrant = when {
+                    (orientation >= 360 - THRESHOLD || orientation <= THRESHOLD) -> 0
+                    (orientation >= 90 - THRESHOLD && orientation <= 90 + THRESHOLD) -> 1
+                    (orientation >= 180 - THRESHOLD && orientation <= 180 + THRESHOLD) -> 2
+                    (orientation >= 270 - THRESHOLD && orientation <= 270 + THRESHOLD) -> 3
+                    else -> lastQuadrant
                 }
 
-                if (currentQuadrant != lastQuadrant) {
+                if (currentQuadrant != -1 && currentQuadrant != lastQuadrant) {
                     if (rotationMode == "OFF") return
 
                     lastQuadrant = currentQuadrant
