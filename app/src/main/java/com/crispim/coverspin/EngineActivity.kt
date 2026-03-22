@@ -41,8 +41,7 @@ class EngineActivity : Activity() {
         var isRotationWorking: Boolean = false
         private var rotationMode: String = "AUTO"
         private var buttonPosition: String = "CENTER_RIGHT"
-        private var lastQuadrant: Int = -1
-        private var lockedQuadrant: Int = -1
+
         var trackLogsEnabled: Boolean = false
             private set
 
@@ -144,7 +143,6 @@ class EngineActivity : Activity() {
 
     private fun addRotationOverlay() {
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-
         val overlayView = View(applicationContext)
 
         val params = WindowManager.LayoutParams(
@@ -191,7 +189,7 @@ class EngineActivity : Activity() {
 
             val shape = GradientDrawable()
             shape.shape = GradientDrawable.OVAL
-            shape.setColor(Color.argb(100, 0, 0, 0)) // Translucent black
+            shape.setColor(Color.argb(100, 0, 0, 0))
             val strokeWidth = (1 * density).toInt()
             shape.setStroke(strokeWidth, Color.DKGRAY)
             background = shape
@@ -206,7 +204,6 @@ class EngineActivity : Activity() {
                         lockRotationRunnable?.let { hideButtonHandler.removeCallbacks(it) }
                         lockRotationRunnable = Runnable {
                             setRotation(ActivityInfo.SCREEN_ORIENTATION_LOCKED)
-                            lockedQuadrant = lastQuadrant
                         }
                         hideButtonHandler.postDelayed({ removeGestureOverlay() }, 300)
                         hideButtonHandler.postDelayed(lockRotationRunnable!!, 1000)
@@ -250,7 +247,7 @@ class EngineActivity : Activity() {
                 params.x = margin
                 params.y = margin
             }
-            else -> { // CENTER_RIGHT
+            else -> {
                 params.gravity = Gravity.END or Gravity.CENTER_VERTICAL
                 params.x = margin
                 params.y = 0
@@ -276,16 +273,19 @@ class EngineActivity : Activity() {
     }
 
     private fun showGestureButton(context: Context) {
-        if (trackLogsEnabled)
-            ToastHelper(this).show("Showing gesture button")
-
+        showButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
         hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
-        addGestureOverlay(
-            context,
-            rotationEnabled
-        )
-        hideButtonRunnable = Runnable { removeGestureOverlay() }
-        hideButtonHandler.postDelayed(hideButtonRunnable!!, 3000)
+
+        showButtonRunnable = Runnable {
+            if (trackLogsEnabled)
+                ToastHelper(this@EngineActivity).show("Showing gesture button")
+
+            addGestureOverlay(context, rotationEnabled)
+            hideButtonRunnable = Runnable { removeGestureOverlay() }
+            hideButtonHandler.postDelayed(hideButtonRunnable!!, 3000)
+        }
+        
+        hideButtonHandler.postDelayed(showButtonRunnable!!, 500)
     }
 
     private fun removeGestureOverlay() {
@@ -344,39 +344,62 @@ class EngineActivity : Activity() {
 
     private fun createOrientationListener(context: Context): OrientationEventListener {
         return object : OrientationEventListener(context) {
-            private val THRESHOLD = 25
+            private val THRESHOLD = 20
+            private val GESTURE_THRESHOLD = 25
             private var lastProcessedTime = 0L
+            private var lastOrientation = -1
+            private var lastQuadrant: Int = -1
+            private var lastQuadrantUpdateTime = 0L
 
             override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN) return
+
                 val currentTime = System.currentTimeMillis()
-                if (currentTime - lastProcessedTime < 100)
+                if (currentTime - lastProcessedTime < 100 || (display != null && display?.displayId == 0))
                     return
                 lastProcessedTime = currentTime
 
-                if (display != null && display?.displayId == 0 || orientation == ORIENTATION_UNKNOWN)
-                    return
+                var isClockwise = false
+                if (lastOrientation != -1) {
+                    val delta = orientation - lastOrientation
+                    val normalizedDelta = when {
+                        delta > 180 -> delta - 360
+                        delta < -180 -> delta + 360
+                        else -> delta
+                    }
+                    if (normalizedDelta != 0) isClockwise = normalizedDelta > 0
+                }
+                lastOrientation = orientation
 
                 val currentQuadrant = when {
                     (orientation >= 360 - THRESHOLD || orientation <= THRESHOLD) -> 0
                     (orientation >= 90 - THRESHOLD && orientation <= 90 + THRESHOLD) -> 1
                     (orientation >= 180 - THRESHOLD && orientation <= 180 + THRESHOLD) -> 2
                     (orientation >= 270 - THRESHOLD && orientation <= 270 + THRESHOLD) -> 3
-                    else -> lastQuadrant
+                    else -> -1
                 }
 
-                if (currentQuadrant != -1 && currentQuadrant != lastQuadrant) {
-                    if (rotationMode == "OFF") {
-                        lastQuadrant = currentQuadrant
-                        return
+                if (currentQuadrant != -1 && lastQuadrant != -1 && currentQuadrant != lastQuadrant && isOverlayActive) {
+                    val targetAngle = currentQuadrant * 90
+                    val isCorrectStep = if (isClockwise) (lastQuadrant + 1) % 4 == currentQuadrant
+                    else (lastQuadrant + 3) % 4 == currentQuadrant
+
+                    val isInGestureRange = when (currentQuadrant) {
+                        0 -> orientation >= 360 - GESTURE_THRESHOLD || orientation <= GESTURE_THRESHOLD
+                        else -> if (isClockwise) orientation in (targetAngle - GESTURE_THRESHOLD)..targetAngle
+                        else orientation in targetAngle..(targetAngle + GESTURE_THRESHOLD)
                     }
 
-                    lastQuadrant = currentQuadrant
-                    val view = overlayViewRef?.get() ?: return
-
-                    showGestureButton(view.context)
-//                    if (rotationMode == "MANUAL")
-//                        setRotation(getRotationManual())
+                    if (isCorrectStep && isInGestureRange) {
+                        showGestureButton(context)
+                    }
                 }
+
+                if (currentQuadrant != -1 && currentQuadrant != lastQuadrant && (currentTime - lastQuadrantUpdateTime > 3000)) {
+                    lastQuadrant = currentQuadrant
+                    lastQuadrantUpdateTime = currentTime
+                }
+                
                 isRotationWorking = true
             }
         }
