@@ -352,7 +352,8 @@ class EngineActivity : Activity() {
             private var lastQuadrantUpdateTime = 0L
 
             override fun onOrientationChanged(orientation: Int) {
-                if (orientation == ORIENTATION_UNKNOWN) return
+                if (orientation == ORIENTATION_UNKNOWN || rotationMode == "OFF")
+                    return
 
                 val currentTime = System.currentTimeMillis()
                 if (currentTime - lastProcessedTime < 100 || (display != null && display?.displayId == 0))

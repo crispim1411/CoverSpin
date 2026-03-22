@@ -244,6 +244,8 @@ class MainActivity : ComponentActivity() {
                                     onClick = { 
                                         rotationMode = mode
                                         EngineActivity.updateMode(context.applicationContext, mode)
+                                        if (mode == "MANUAL")
+                                            EngineActivity.routineSetRotation(context, false, keepListener=true)
                                     },
                                     selected = rotationMode == mode
                                 ) {
