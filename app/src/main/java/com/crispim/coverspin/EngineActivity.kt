@@ -32,6 +32,8 @@ class EngineActivity : Activity() {
         private var gestureOverlayViewRef: WeakReference<View>? = null
         private val hideButtonHandler = Handler(Looper.getMainLooper())
         private var hideButtonRunnable: Runnable? = null
+        private var showButtonRunnable: Runnable? = null
+        private var lockRotationRunnable: Runnable? = null
         private lateinit var orientationEventListener: OrientationEventListener
         private var rotationEnabled: Boolean = true
         val isOverlayActive: Boolean
@@ -39,6 +41,8 @@ class EngineActivity : Activity() {
         var isRotationWorking: Boolean = false
         private var rotationMode: String = "AUTO"
         private var buttonPosition: String = "CENTER_RIGHT"
+        private var lastQuadrant: Int = -1
+        private var lockedQuadrant: Int = -1
         var trackLogsEnabled: Boolean = false
             private set
 
@@ -77,7 +81,7 @@ class EngineActivity : Activity() {
             prefs.edit { putString("button_position", position) }
         }
 
-        fun routineSetRotation(context: Context, enabled: Boolean) {
+        fun routineSetRotation(context: Context, enabled: Boolean, keepListener:Boolean=false) {
             rotationEnabled = enabled
 
             if (overlayViewRef == null)
@@ -96,7 +100,7 @@ class EngineActivity : Activity() {
 
                     windowManager.updateViewLayout(view, params)
 
-                    if (enabled) orientationEventListener.enable()
+                    if (enabled || keepListener) orientationEventListener.enable()
                     else orientationEventListener.disable()
 
                 } catch (e: Exception) {
@@ -134,6 +138,8 @@ class EngineActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
         hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
+        showButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
+        lockRotationRunnable?.let { hideButtonHandler.removeCallbacks(it) }
     }
 
     private fun addRotationOverlay() {
@@ -152,7 +158,6 @@ class EngineActivity : Activity() {
         )
 
         params.gravity = Gravity.TOP or Gravity.START
-        params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
 
         if (rotationMode == "AUTO") {
             params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
@@ -193,13 +198,19 @@ class EngineActivity : Activity() {
 
             setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
-                    val newOrientation = if (rotationMode == "AUTO") {
+                    if (rotationMode == "AUTO") {
                         rotationEnabled = !rotationEnabled
-                        getRotationAuto()
+                        setRotation(getRotationAuto())
                     } else {
-                        getRotationManual(true)
+                        setRotation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+                        lockRotationRunnable?.let { hideButtonHandler.removeCallbacks(it) }
+                        lockRotationRunnable = Runnable {
+                            setRotation(ActivityInfo.SCREEN_ORIENTATION_LOCKED)
+                            lockedQuadrant = lastQuadrant
+                        }
+                        hideButtonHandler.postDelayed({ removeGestureOverlay() }, 300)
+                        hideButtonHandler.postDelayed(lockRotationRunnable!!, 1000)
                     }
-                    setRotation(newOrientation)
                     vibrate()
                     view.performClick()
                 }
@@ -294,13 +305,6 @@ class EngineActivity : Activity() {
         }
     }
 
-    private fun getRotationManual(releaseRotation: Boolean = false) : Int {
-        return if (releaseRotation)
-            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-        else
-            ActivityInfo.SCREEN_ORIENTATION_LOCKED
-    }
-
     private fun getRotationAuto() : Int {
         return if (rotationEnabled)
             ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
@@ -340,7 +344,6 @@ class EngineActivity : Activity() {
 
     private fun createOrientationListener(context: Context): OrientationEventListener {
         return object : OrientationEventListener(context) {
-            private var lastQuadrant = -1
             private val THRESHOLD = 25
 
             override fun onOrientationChanged(orientation: Int) {
@@ -356,14 +359,17 @@ class EngineActivity : Activity() {
                 }
 
                 if (currentQuadrant != -1 && currentQuadrant != lastQuadrant) {
-                    if (rotationMode == "OFF") return
+                    if (rotationMode == "OFF") {
+                        lastQuadrant = currentQuadrant
+                        return
+                    }
 
                     lastQuadrant = currentQuadrant
                     val view = overlayViewRef?.get() ?: return
 
                     showGestureButton(view.context)
-                    if (rotationMode == "MANUAL")
-                        setRotation(getRotationManual())
+//                    if (rotationMode == "MANUAL")
+//                        setRotation(getRotationManual())
                 }
                 isRotationWorking = true
             }

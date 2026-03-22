@@ -88,6 +88,7 @@ class MainActivity : ComponentActivity() {
             }
             "com.crispim.coverspin.ACTION_SET_MODE_MANUAL" -> {
                 EngineActivity.updateMode(this, "MANUAL")
+                EngineActivity.routineSetRotation(this, false, keepListener=true)
                 true
             }
             "com.crispim.coverspin.ACTION_DISABLE_ROTATION" -> {
