@@ -345,8 +345,14 @@ class EngineActivity : Activity() {
     private fun createOrientationListener(context: Context): OrientationEventListener {
         return object : OrientationEventListener(context) {
             private val THRESHOLD = 25
+            private var lastProcessedTime = 0L
 
             override fun onOrientationChanged(orientation: Int) {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastProcessedTime < 100)
+                    return
+                lastProcessedTime = currentTime
+
                 if (display != null && display?.displayId == 0 || orientation == ORIENTATION_UNKNOWN)
                     return
 
