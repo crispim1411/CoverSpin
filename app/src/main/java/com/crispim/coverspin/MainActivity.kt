@@ -27,15 +27,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
-import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,12 +81,21 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?): Boolean {
         return when (intent?.action) {
-            "com.crispim.coverspin.ACTION_ENABLE_ROTATION" -> {
+            "com.crispim.coverspin.ACTION_SET_MODE_AUTO" -> {
+                EngineActivity.updateMode(this, "AUTO")
                 EngineActivity.routineSetRotation(this, true)
+                true
+            }
+            "com.crispim.coverspin.ACTION_SET_MODE_MANUAL" -> {
+                EngineActivity.updateMode(this, "MANUAL")
                 true
             }
             "com.crispim.coverspin.ACTION_DISABLE_ROTATION" -> {
                 EngineActivity.routineSetRotation(this, false)
+                true
+            }
+            "com.crispim.coverspin.ACTION_SET_MODE_OFF" -> {
+                EngineActivity.updateMode(this, "OFF")
                 true
             }
             else -> false
@@ -272,7 +280,9 @@ class MainActivity : ComponentActivity() {
                                 onValueChange = {},
                                 readOnly = true,
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                modifier = Modifier
+                                    .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = true)
+                                    .fillMaxWidth(),
                                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                                 shape = RoundedCornerShape(12.dp)
                             )
@@ -357,7 +367,7 @@ class MainActivity : ComponentActivity() {
                     Text(text = "Buy me an Ice Cream ($1)")
                 }
             }
-
+            
             Spacer(modifier = Modifier.height(30.dp))
         }
     }
