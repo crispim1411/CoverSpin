@@ -41,6 +41,8 @@ class EngineActivity : Activity() {
         var isRotationWorking: Boolean = false
         private var rotationMode: String = "AUTO"
         private var buttonPosition: String = "CENTER_RIGHT"
+        var gestureButtonEnabled: Boolean = false
+            private set
 
         var trackLogsEnabled: Boolean = false
             private set
@@ -54,6 +56,7 @@ class EngineActivity : Activity() {
                 val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
                 rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
                 buttonPosition = prefs.getString("button_position", "CENTER_RIGHT") ?: "CENTER_RIGHT"
+                gestureButtonEnabled = prefs.getBoolean("gesture_button_enabled", false)
                 trackLogsEnabled = prefs.getBoolean("track_logs", false)
 
                 val startIntent = Intent(context, EngineActivity::class.java)
@@ -112,6 +115,15 @@ class EngineActivity : Activity() {
             trackLogsEnabled = enabled
             val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
             prefs.edit { putBoolean("track_logs", enabled) }
+        }
+
+        fun updateGestureButtonEnabled(context: Context, enabled: Boolean) {
+            gestureButtonEnabled = enabled
+            val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
+            prefs.edit { putBoolean("gesture_button_enabled", enabled) }
+
+            if (overlayViewRef == null)
+                initialize(context)
         }
     }
 
@@ -352,7 +364,7 @@ class EngineActivity : Activity() {
             private var lastQuadrantUpdateTime = 0L
 
             override fun onOrientationChanged(orientation: Int) {
-                if (orientation == ORIENTATION_UNKNOWN || rotationMode == "OFF")
+                if (orientation == ORIENTATION_UNKNOWN || !gestureButtonEnabled)
                     return
 
                 val currentTime = System.currentTimeMillis()

@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
             "com.crispim.coverspin.ACTION_SET_MODE_MANUAL" -> {
                 EngineActivity.updateMode(this, "MANUAL")
                 EngineActivity.routineSetRotation(this, false, keepListener=true)
+                EngineActivity.updateGestureButtonEnabled(this, true)
                 true
             }
             "com.crispim.coverspin.ACTION_DISABLE_ROTATION" -> {
@@ -116,6 +117,9 @@ class MainActivity : ComponentActivity() {
         val prefs = remember { context.getSharedPreferences("settings", Context.MODE_PRIVATE) }
         var rotationMode by remember { 
             mutableStateOf(prefs.getString("rotation_mode", "AUTO") ?: "AUTO") 
+        }
+        var gestureButtonEnabled by remember {
+            mutableStateOf(prefs.getBoolean("gesture_button_enabled", false))
         }
         var buttonPosition by remember {
             mutableStateOf(prefs.getString("button_position", "CENTER_RIGHT") ?: "CENTER_RIGHT")
@@ -193,25 +197,29 @@ class MainActivity : ComponentActivity() {
                     isError = true
                 )
 
-                PermissionItem(
-                    title = "Accessibility Service",
-                    description = "Required to display the floating menu button on the cover screen.",
-                    isEnabled = hasAccessibility,
-                    onClick = { showAccessibilityDialog = true }
-                )
+                if (!hasAccessibility) {
+                    PermissionItem(
+                        title = "Accessibility Service",
+                        description = "Required to display the floating menu button on the cover screen.",
+                        isEnabled = hasAccessibility,
+                        onClick = { showAccessibilityDialog = true }
+                    )
+                }
 
-                PermissionItem(
-                    title = "Display Over Other Apps",
-                    description = "Required to draw the menu interface on the cover screen.",
-                    isEnabled = hasOverlay,
-                    onClick = {
-                        val intent = Intent(
-                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            "package:${context.packageName}".toUri()
-                        )
-                        context.startActivity(intent)
-                    }
-                )
+                if (!hasOverlay) {
+                    PermissionItem(
+                        title = "Display Over Other Apps",
+                        description = "Required to draw the menu interface on the cover screen.",
+                        isEnabled = hasOverlay,
+                        onClick = {
+                            val intent = Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                "package:${context.packageName}".toUri()
+                            )
+                            context.startActivity(intent)
+                        }
+                    )
+                }
             } else {
                 StatusCard(
                     title = "Ready to Go!",
@@ -221,7 +229,7 @@ class MainActivity : ComponentActivity() {
 
                 TutorialsSection()
 
-                // Gesture Button Mode Card
+                // Rotation and Gesture Button Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -230,22 +238,27 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Gesture Button Mode",
+                            text = "Rotation Mode",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                            val modes = listOf("AUTO", "MANUAL", "OFF")
+                            val modes = listOf("AUTO", "MANUAL")
                             modes.forEachIndexed { index, mode ->
                                 SegmentedButton(
                                     shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
                                     onClick = { 
                                         rotationMode = mode
                                         EngineActivity.updateMode(context.applicationContext, mode)
-                                        if (mode == "MANUAL")
+                                        if (mode == "MANUAL") {
                                             EngineActivity.routineSetRotation(context, false, keepListener=true)
+                                            gestureButtonEnabled = true
+                                            EngineActivity.updateGestureButtonEnabled(context, true)
+                                        } else {
+                                            EngineActivity.routineSetRotation(context, true)
+                                        }
                                     },
                                     selected = rotationMode == mode
                                 ) {
@@ -255,13 +268,29 @@ class MainActivity : ComponentActivity() {
                         }
                         
                         Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Text(
-                            text = "Button Position",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Button Position",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = if (gestureButtonEnabled) MaterialTheme.colorScheme.primary else Color.Gray
+                            )
+
+                            Switch(
+                                checked = gestureButtonEnabled,
+                                onCheckedChange = { enabled ->
+                                    if (rotationMode != "MANUAL") {
+                                        gestureButtonEnabled = enabled
+                                        EngineActivity.updateGestureButtonEnabled(context, enabled)
+                                    }
+                                }
+                            )
+                        }
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         
@@ -274,24 +303,25 @@ class MainActivity : ComponentActivity() {
                         )
                         
                         ExposedDropdownMenuBox(
-                            expanded = expanded,
-                            onExpandedChange = { expanded = !expanded },
+                            expanded = expanded && gestureButtonEnabled,
+                            onExpandedChange = { if (gestureButtonEnabled) expanded = !expanded },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             OutlinedTextField(
                                 value = positions.find { it.first == buttonPosition }?.second ?: "Center Right",
                                 onValueChange = {},
                                 readOnly = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                enabled = gestureButtonEnabled,
+                                trailingIcon = { if (gestureButtonEnabled) ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                                 modifier = Modifier
-                                    .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = true)
+                                    .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = gestureButtonEnabled)
                                     .fillMaxWidth(),
                                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                                 shape = RoundedCornerShape(12.dp)
                             )
                             
                             ExposedDropdownMenu(
-                                expanded = expanded,
+                                expanded = expanded && gestureButtonEnabled,
                                 onDismissRequest = { expanded = false }
                             ) {
                                 positions.forEach { (value, label) ->
@@ -310,9 +340,9 @@ class MainActivity : ComponentActivity() {
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         Text(
-                            text = when(rotationMode) {
-                                "OFF" -> "The gesture button is disabled."
-                                "AUTO" -> "The button toggles between auto-rotation and locked mode."
+                            text = when {
+                                !gestureButtonEnabled -> "The gesture button is disabled."
+                                rotationMode == "AUTO" -> "The button toggles between auto-rotation and locked mode."
                                 else -> "The button appears when you tilt the device to suggest a rotation, similar to Android's system button."
                             },
                             style = MaterialTheme.typography.bodySmall,
