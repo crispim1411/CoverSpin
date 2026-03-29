@@ -61,6 +61,9 @@ dependencies {
     // Coil for image loading
     implementation(libs.coil.compose)
     
+    // Play Store App Update API
+    implementation(libs.play.app.update)
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -35,11 +35,21 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 
 class MainActivity : ComponentActivity() {
+    private val appUpdateManager by lazy { AppUpdateManagerFactory.create(this) }
+    private val toastHelper by lazy { ToastHelper(this) }
+    private val UPDATE_REQUEST_CODE = 1337
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        checkForUpdates()
+
         if (handleIntent(intent)) {
             finish()
             return
@@ -67,6 +77,49 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     SettingsScreen()
+                }
+            }
+        }
+    }
+
+    private fun checkForUpdates() {
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        this,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
+                        UPDATE_REQUEST_CODE
+                    )
+                } catch (e: Exception) {
+                    toastHelper.show("Update flow error: ${e.message}")
+                }
+            }
+        }.addOnFailureListener { e ->
+            val errorMsg= e.message ?: ""
+            if (!errorMsg.contains("Error(-10)"))
+                toastHelper.show("Update check failed: ${e.message}")
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Resume an update that is already in progress
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        this,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
+                        UPDATE_REQUEST_CODE
+                    )
+                } catch (e: Exception) {
+                    toastHelper.show("Resume update error: ${e.message}")
                 }
             }
         }
