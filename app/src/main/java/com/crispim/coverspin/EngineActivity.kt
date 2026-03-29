@@ -44,20 +44,12 @@ class EngineActivity : Activity() {
         var gestureButtonEnabled: Boolean = false
             private set
 
-        var trackLogsEnabled: Boolean = false
-            private set
-
         fun initialize(context: Context) {
             try {
-                if (trackLogsEnabled) {
-                    ToastHelper(context).show("Initializing")
-                }
-
                 val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
                 rotationMode = prefs.getString("rotation_mode", "AUTO") ?: "AUTO"
                 buttonPosition = prefs.getString("button_position", "CENTER_RIGHT") ?: "CENTER_RIGHT"
                 gestureButtonEnabled = prefs.getBoolean("gesture_button_enabled", false)
-                trackLogsEnabled = prefs.getBoolean("track_logs", false)
 
                 val startIntent = Intent(context, EngineActivity::class.java)
                 startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -111,12 +103,6 @@ class EngineActivity : Activity() {
             }
         }
 
-        fun updateTrackLogs(context: Context, enabled: Boolean) {
-            trackLogsEnabled = enabled
-            val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
-            prefs.edit { putBoolean("track_logs", enabled) }
-        }
-
         fun updateGestureButtonEnabled(context: Context, enabled: Boolean) {
             gestureButtonEnabled = enabled
             val prefs = context.getSharedPreferences("settings", MODE_PRIVATE)
@@ -137,8 +123,6 @@ class EngineActivity : Activity() {
 
         orientationEventListener = createOrientationListener(applicationContext)
         if (!isOverlayActive) {
-            if (trackLogsEnabled)
-                ToastHelper(this).show("Adding rotation overlay")
             addRotationOverlay()
         }
 
@@ -289,9 +273,6 @@ class EngineActivity : Activity() {
         hideButtonRunnable?.let { hideButtonHandler.removeCallbacks(it) }
 
         showButtonRunnable = Runnable {
-            if (trackLogsEnabled)
-                ToastHelper(this@EngineActivity).show("Showing gesture button")
-
             addGestureOverlay(context, rotationEnabled)
             hideButtonRunnable = Runnable { removeGestureOverlay() }
             hideButtonHandler.postDelayed(hideButtonRunnable!!, 3000)
@@ -329,8 +310,6 @@ class EngineActivity : Activity() {
             initialize(applicationContext)
         else {
             try {
-                if (trackLogsEnabled)
-                    ToastHelper(this).show("Setting rotation to $newOrientation")
                 val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
                 overlayViewRef?.get()?.let { view ->

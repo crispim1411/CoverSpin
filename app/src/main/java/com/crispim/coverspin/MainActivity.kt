@@ -124,9 +124,6 @@ class MainActivity : ComponentActivity() {
         var buttonPosition by remember {
             mutableStateOf(prefs.getString("button_position", "CENTER_RIGHT") ?: "CENTER_RIGHT")
         }
-        var trackLogsEnabled by remember {
-            mutableStateOf(prefs.getBoolean("track_logs", false))
-        }
 
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
@@ -347,41 +344,6 @@ class MainActivity : ComponentActivity() {
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
-                        )
-                    }
-                }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Track Logs",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Enable debug toasts for error tracking.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
-                            )
-                        }
-                        Switch(
-                            checked = trackLogsEnabled,
-                            onCheckedChange = { enabled ->
-                                trackLogsEnabled = enabled
-                                EngineActivity.updateTrackLogs(context, enabled)
-                            }
                         )
                     }
                 }
