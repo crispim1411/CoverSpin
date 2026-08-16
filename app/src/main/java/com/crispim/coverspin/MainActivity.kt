@@ -349,7 +349,8 @@ class MainActivity : ComponentActivity() {
                             "CENTER_RIGHT" to "Center Right (Default)",
                             "CENTER_LEFT" to "Center Left",
                             "BOTTOM_RIGHT" to "Bottom Right",
-                            "BOTTOM_LEFT" to "Bottom Left"
+                            "BOTTOM_LEFT" to "Bottom Left",
+                            "CENTER" to "Center"
                         )
                         
                         ExposedDropdownMenuBox(

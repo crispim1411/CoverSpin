@@ -228,6 +228,11 @@ class EngineActivity : Activity() {
         val margin = (16 * density).toInt()
 
         when (buttonPosition) {
+            "CENTER" -> {
+                params.gravity = Gravity.CENTER
+                params.x = 0
+                params.y = 0
+            }
             "CENTER_LEFT" -> {
                 params.gravity = Gravity.START or Gravity.CENTER_VERTICAL
                 params.x = margin
